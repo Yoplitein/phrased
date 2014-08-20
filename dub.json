@@ -1,11 +1,11 @@
 {
-	"name": "libsengine",
-	"description": "A minimal D application.",
-	"copyright": "Copyright © 2014, Yoplitein",
-	"authors": ["Yoplitein"],
-	"dependencies": {
+    "name": "libsengine",
+    "description": "A minimal D application.",
+    "copyright": "Copyright © 2014, Yoplitein",
+    "authors": ["Yoplitein"],
+    "dependencies": {
         "d2sqlite3": ">=0.1.0"
-	},
+    },
     "configurations": [
         {
             "name": "default",
