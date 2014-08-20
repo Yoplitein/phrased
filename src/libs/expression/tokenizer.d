@@ -130,6 +130,7 @@ unittest
         ]);
         assert(tokenize("abc 123") == [
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
         ]);
         
@@ -149,6 +150,7 @@ unittest
         assert(tokenize("{abc 123}") == [
             Token(CHOICE_START),
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
             Token(CHOICE_END),
         ]);
@@ -162,6 +164,7 @@ unittest
         assert(tokenize("$(abc 123)") == [
             Token(VARIABLE_START),
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
             Token(VARIABLE_END),
         ]);
@@ -169,12 +172,14 @@ unittest
             Token(WORD, "pre"),
             Token(VARIABLE_START),
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
             Token(VARIABLE_END),
         ]);
         assert(tokenize("$(abc 123)fix") == [
             Token(VARIABLE_START),
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
             Token(VARIABLE_END),
             Token(WORD, "fix"),
@@ -183,6 +188,7 @@ unittest
             Token(WORD, "pre"),
             Token(VARIABLE_START),
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
             Token(VARIABLE_END),
             Token(WORD, "fix"),
@@ -215,6 +221,7 @@ unittest
         ]);
         assert(tokenize("pre\\$(abc 123)fix") == [
             Token(WORD, "pre$(abc"),
+            Token(WORD, " "),
             Token(WORD, "123)fix"),
         ]);
         
@@ -245,6 +252,7 @@ unittest
             Token(CHOICE_START),
             Token(VARIABLE_START),
             Token(WORD, "abc"),
+            Token(WORD, " "),
             Token(WORD, "123"),
             Token(VARIABLE_END),
             Token(CHOICE_END),

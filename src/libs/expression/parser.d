@@ -77,3 +77,8 @@ Particle[] parse(Token[] tokens)
     
     return result;
 }
+
+unittest
+{
+    //TODO (I know, I'm a terrible person)
+}

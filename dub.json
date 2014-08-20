@@ -1,8 +1,8 @@
 {
 	"name": "libsengine",
 	"description": "A minimal D application.",
-	"copyright": "Copyright © 2014, Steven",
-	"authors": ["Steven"],
+	"copyright": "Copyright © 2014, Yoplitein",
+	"authors": ["Yoplitein"],
 	"dependencies": {
         "d2sqlite3": ">=0.1.0"
 	},
@@ -10,7 +10,7 @@
         {
             "name": "default",
             "targetType": "executable",
-            "excludedSourceFiles": ["src/scratchpad.d"]
+            "excludedSourceFiles": ["src/scratchpad.d"],
         },
         {
             "name": "scratchpad",
@@ -18,5 +18,10 @@
             "targetName": "scratchpad",
             "excludedSourceFiles": ["src/libs/main.d"]
         }
-    ]
+    ],
+    "buildTypes": {
+        "debug": {
+            "buildOptions": ["debugMode", "debugInfo", "unittests"]
+        }
+    }
 }
