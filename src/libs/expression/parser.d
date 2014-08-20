@@ -15,13 +15,12 @@ Particle[] parse(Token[] tokens)
     bool parsingVariable;
     
     foreach(token; tokens)
-    {
         switch(token.type) with(TokenType)
         {
             case WORD:
                 if(parsingVariable)
                 {
-                    currentVariable ~= token.value ~ " ";
+                    currentVariable ~= token.value;
                     
                     break;
                 }
@@ -29,7 +28,6 @@ Particle[] parse(Token[] tokens)
                 if(parsingChoice)
                 {
                     currentChoice.add(new Particle(token.value));
-                    //currentChoice.add(new Particle(" "));
                     
                     break;
                 }
@@ -43,8 +41,6 @@ Particle[] parse(Token[] tokens)
                 
                 break;
             case CHOICE_END:
-                //currentChoice.pop_last;
-                
                 parsingChoice = false;
                 choices ~= [currentChoice];
                 result ~= new ChoiceParticle(choices);
@@ -53,8 +49,6 @@ Particle[] parse(Token[] tokens)
                 
                 break;
             case CHOICE_SEPARATOR:
-                //currentChoice.pop_last;
-                
                 choices ~= [currentChoice];
                 currentChoice = new ParticleSequence;
                 
@@ -65,9 +59,6 @@ Particle[] parse(Token[] tokens)
                 break;
             case VARIABLE_END:
                 parsingVariable = false;
-                
-                if(currentVariable.length != 0)
-                    currentVariable = currentVariable[0 .. $ - 1];
                 
                 if(currentVariable.length == 0)
                     throw new Exception("Variable name cannot be blank");
@@ -83,10 +74,6 @@ Particle[] parse(Token[] tokens)
             default:
                 assert(false);
         }
-    }
-    
-    /*if(result.length ~= 0)
-        result = re*/
     
     return result;
 }

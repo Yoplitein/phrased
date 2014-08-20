@@ -1,7 +1,6 @@
 module libs.expression.particles;
 
 import std.string: format;
-import std.random: uniform;
 
 class Particle
 {
@@ -41,20 +40,14 @@ class ChoiceParticle: Particle
     
     override string build()
     {
+        import std.random: uniform;
+        
         return choices[uniform!"[]"(0, $ - 1)].build();
     }
     
     override string toString()
     {
-        string choiceStr;
-        
-        foreach(choice; choices)
-            choiceStr ~= "    %s\n".format(choice);
-        
-        if(choiceStr.length != 0)
-            choiceStr = choiceStr[0 .. $ - 1];
-        
-        return "ChoiceParticle(\n%s\n)".format(choiceStr);
+        return "ChoiceParticle(%s)".format(choices);
     }
 }
 
@@ -67,7 +60,9 @@ class VariableParticle: Particle
     
     override string build()
     {
-        return "<variable of type " ~ contents ~ ">";
+        import libs.database;
+        
+        return resolve_variable(contents);
     }
     
     override string toString()
@@ -97,17 +92,9 @@ class ParticleSequence: Particle
         string result;
         
         foreach(part; parts)
-        {
-            string built = part.build;
-            
-            //if(built.length != 0)
-                result ~= built;
-        }
+            result ~= part.build;
         
-        //if(result.length == 0)
-            return result;
-        //else
-        //    return result[0 .. $ - 1];
+        return result;
     }
     
     override string toString()

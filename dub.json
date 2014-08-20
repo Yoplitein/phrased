@@ -3,7 +3,20 @@
 	"description": "A minimal D application.",
 	"copyright": "Copyright © 2014, Steven",
 	"authors": ["Steven"],
-    "targetType": "executable",
 	"dependencies": {
-	}
+        "d2sqlite3": ">=0.1.0"
+	},
+    "configurations": [
+        {
+            "name": "default",
+            "targetType": "executable",
+            "excludedSourceFiles": ["src/scratchpad.d"]
+        },
+        {
+            "name": "scratchpad",
+            "targetType": "executable",
+            "targetName": "scratchpad",
+            "excludedSourceFiles": ["src/libs/main.d"]
+        }
+    ]
 }

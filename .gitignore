@@ -1,5 +1,7 @@
 .dub/*
 *.exe
+*.txt
+*.db
 dub.selections.json
-scratchpad.d
+src/scratchpad.d
 ./libsengine
