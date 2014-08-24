@@ -78,6 +78,13 @@ Particle[] parse(Token[] tokens)
     return result;
 }
 
+Particle[] parse(string message)
+{
+    import libs.expression.tokenizer: tokenize;
+    
+    return parse(tokenize(message));
+}
+
 unittest
 {
     //TODO (I know, I'm a terrible person)

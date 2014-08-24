@@ -71,6 +71,31 @@ class PlaintextDatabase: Database
     }
 }
 
+class RuntimeDatabase: Database
+{
+    Database fallback;
+    string[][string] data;
+    
+    this(Database fallback)
+    {
+        this.fallback = fallback;
+    }
+    
+    override string resolve_variable(string name)
+    {
+        if(name in data)
+            return data[name].choice;
+        else
+            return fallback.resolve_variable(name);
+    }
+    
+    void update(string[][string] data)
+    {
+        foreach(key; data.keys)
+            this.data[key] ~= data[key];
+    }
+}
+
 string resolve_variable(string name)
 {
     return database.resolve_variable(name);
@@ -81,10 +106,10 @@ private string choice(string[] choices)
     return choices[uniform(0, $)];
 }
 
-private Database database;
+RuntimeDatabase database;
 
 static this()
 {
     //TODO: compile-time selection of database driver
-    database = new PlaintextDatabase;
+    database = new RuntimeDatabase(new PlaintextDatabase);
 }

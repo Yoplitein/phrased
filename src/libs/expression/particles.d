@@ -113,3 +113,13 @@ class ParticleSequence: Particle
             parts = parts[0 .. $ - 1];
     }
 }
+
+string build(Particle[] particles)
+{
+    string result;
+    
+    foreach(particle; particles)
+        result ~= particle.build;
+    
+    return result;
+}

@@ -1,50 +1,60 @@
 module libs.main;
 
 import std.stdio;
+import std.getopt;
 import std.range: join;
 
 import libs.expression;
+import libs.database;
 
-int main(string[] args)
+void main(string[] args)
 {
+    string[][string] defines;
+    
+    void define_handler(string _, string option)
+    {
+        string key;
+        string value;
+        bool haveKey;
+        
+        foreach(character; option)
+        {
+            if(!haveKey && character == '=')
+            {
+                haveKey = true;
+                
+                continue;
+            }
+            
+            if(haveKey)
+                value ~= character;
+            else
+                key ~= character;
+        }
+        
+        defines[key] ~= [value];
+    }
+    
+    getopt(
+        args,
+        config.passThrough,
+        "define", &define_handler
+    );
+    
+    database.update(defines);
+    
     if(args.length == 1)
     {
-        writeln("Not enough arguments");
+        stderr.writeln("Not enough arguments");
         
-        return 1;
+        return;
     }
     
     auto sentence = args[1 .. $].join(" ");
+    auto parsed = sentence.parse;
     
-    //writeln("sentence: ", sentence);
+    /*foreach(token; parsed)
+        writeln(token);*/
     
-    auto tokens = tokenize(sentence);
-    
-    //writeln("tokenized:");
-    //
-    //foreach(token; tokens)
-    //    writeln(token);
-    
-    auto parsed = parse(tokens);
-    
-    //writeln("parsed:");
-    //
-    //foreach(particle; parsed)
-    //    writeln(particle);
-    //
-    //writeln("built:");
-    
-    string result;
-    
-    foreach(particle; parsed)
-    {
-        string built = particle.build;
-        
-        //if(built.length != 0)
-            result ~= built; // ~ " ";
-    }
-    
-    writeln(result);
-    
-    return 0;
+    writeln(parsed.build);
 }

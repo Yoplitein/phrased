@@ -1,7 +1,9 @@
 .dub/*
+.c9/*
 *.exe
 *.txt
 *.db
 dub.selections.json
 src/scratchpad.d
-./libsengine
+libsengine
+scratchpad
