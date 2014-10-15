@@ -1,4 +1,4 @@
-module libs.expression.tokenizer;
+module libs.expression.lexer;
 
 import std.string: format;
 import std.random: uniform;
@@ -19,7 +19,7 @@ struct Token
     string value = null;
 }
 
-Token[] tokenize(string format)
+Token[] lex(string format)
 {
     Token[] result;
     string part;
@@ -125,29 +125,29 @@ unittest
     with(TokenType)
     {
         //basic words
-        assert(tokenize("abc") == [
+        assert(lex("abc") == [
             Token(WORD, "abc"),
         ]);
-        assert(tokenize("abc 123") == [
+        assert(lex("abc 123") == [
             Token(WORD, "abc"),
             Token(WORD, " "),
             Token(WORD, "123"),
         ]);
         
         //choices
-        assert(tokenize("{abc}") == [
+        assert(lex("{abc}") == [
             Token(CHOICE_START),
             Token(WORD, "abc"),
             Token(CHOICE_END),
         ]);
-        assert(tokenize("{abc|123}") == [
+        assert(lex("{abc|123}") == [
             Token(CHOICE_START),
             Token(WORD, "abc"),
             Token(CHOICE_SEPARATOR),
             Token(WORD, "123"),
             Token(CHOICE_END),
         ]);
-        assert(tokenize("{abc 123}") == [
+        assert(lex("{abc 123}") == [
             Token(CHOICE_START),
             Token(WORD, "abc"),
             Token(WORD, " "),
@@ -156,19 +156,19 @@ unittest
         ]);
         
         //variables
-        assert(tokenize("$(abc)") == [
+        assert(lex("$(abc)") == [
             Token(VARIABLE_START),
             Token(WORD, "abc"),
             Token(VARIABLE_END),
         ]);
-        assert(tokenize("$(abc 123)") == [
+        assert(lex("$(abc 123)") == [
             Token(VARIABLE_START),
             Token(WORD, "abc"),
             Token(WORD, " "),
             Token(WORD, "123"),
             Token(VARIABLE_END),
         ]);
-        assert(tokenize("pre$(abc 123)") == [
+        assert(lex("pre$(abc 123)") == [
             Token(WORD, "pre"),
             Token(VARIABLE_START),
             Token(WORD, "abc"),
@@ -176,7 +176,7 @@ unittest
             Token(WORD, "123"),
             Token(VARIABLE_END),
         ]);
-        assert(tokenize("$(abc 123)fix") == [
+        assert(lex("$(abc 123)fix") == [
             Token(VARIABLE_START),
             Token(WORD, "abc"),
             Token(WORD, " "),
@@ -184,7 +184,7 @@ unittest
             Token(VARIABLE_END),
             Token(WORD, "fix"),
         ]);
-        assert(tokenize("pre$(abc 123)fix") == [
+        assert(lex("pre$(abc 123)fix") == [
             Token(WORD, "pre"),
             Token(VARIABLE_START),
             Token(WORD, "abc"),
@@ -195,31 +195,31 @@ unittest
         ]);
         
         //escapes
-        assert(tokenize("\\{") == [
+        assert(lex("\\{") == [
             Token(WORD, "{"),
         ]);
-        assert(tokenize("\\$") == [
+        assert(lex("\\$") == [
             Token(WORD, "$"),
         ]);
-        assert(tokenize("\\\\") == [
+        assert(lex("\\\\") == [
             Token(WORD, "\\"),
         ]);
-        assert(tokenize("\\{abc|123}") == [
+        assert(lex("\\{abc|123}") == [
             Token(WORD, "{abc|123}"),
         ]);
-        assert(tokenize("{abc\\|123}") == [
+        assert(lex("{abc\\|123}") == [
             Token(CHOICE_START),
             Token(WORD, "abc|123"),
             Token(CHOICE_END),
         ]);
-        assert(tokenize("{abc|123\\}}") == [
+        assert(lex("{abc|123\\}}") == [
             Token(CHOICE_START),
             Token(WORD, "abc"),
             Token(CHOICE_SEPARATOR),
             Token(WORD, "123}"),
             Token(CHOICE_END),
         ]);
-        assert(tokenize("pre\\$(abc 123)fix") == [
+        assert(lex("pre\\$(abc 123)fix") == [
             Token(WORD, "pre$(abc"),
             Token(WORD, " "),
             Token(WORD, "123)fix"),
@@ -228,27 +228,27 @@ unittest
         //unterminated expressions
         try
         {
-            tokenize("\\");
+            lex("\\");
             assert(false);
         }
         catch(Exception err) {}
         
         try
         {
-            tokenize("{");
+            lex("{");
             assert(false);
         }
         catch(Exception err) {}
         
         try
         {
-            tokenize("$(");
+            lex("$(");
             assert(false);
         }
         catch(Exception err) {}
         
         //variables in choices
-        assert(tokenize("{$(abc 123)}") == [
+        assert(lex("{$(abc 123)}") == [
             Token(CHOICE_START),
             Token(VARIABLE_START),
             Token(WORD, "abc"),
@@ -257,7 +257,7 @@ unittest
             Token(VARIABLE_END),
             Token(CHOICE_END),
         ]);
-        assert(tokenize("{$(abc|123)|456}") == [
+        assert(lex("{$(abc|123)|456}") == [
             Token(CHOICE_START),
             Token(VARIABLE_START),
             Token(WORD, "abc|123"),

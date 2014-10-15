@@ -1,9 +1,5 @@
 module libs.database;
 
-import std.stdio;
-import std.string: format;
-import std.random: uniform;
-
 interface Database
 {
     string resolve_variable(string name);
@@ -31,6 +27,7 @@ class PlaintextDatabase: Database
     
     this()
     {
+        import std.stdio: File;
         import std.regex: ctRegex, matchFirst;
         import std.string: stripRight;
         
@@ -64,8 +61,10 @@ class PlaintextDatabase: Database
     
     override string resolve_variable(string name)
     {
+        import std.string: format;
+        
         if(name in words)
-            return words[name].choice;
+            return words[name].random_choice;
         else
             return "$(%s)".format(name);
     }
@@ -74,7 +73,7 @@ class PlaintextDatabase: Database
 class RuntimeDatabase: Database
 {
     Database fallback;
-    string[][string] data;
+    string[][string] words;
     
     this(Database fallback)
     {
@@ -83,16 +82,16 @@ class RuntimeDatabase: Database
     
     override string resolve_variable(string name)
     {
-        if(name in data)
-            return data[name].choice;
+        if(name in words)
+            return words[name].random_choice;
         else
             return fallback.resolve_variable(name);
     }
     
-    void update(string[][string] data)
+    void update(string[][string] words)
     {
-        foreach(key; data.keys)
-            this.data[key] ~= data[key];
+        foreach(key; words.keys)
+            this.words[key] ~= words[key];
     }
 }
 
@@ -101,8 +100,10 @@ string resolve_variable(string name)
     return database.resolve_variable(name);
 }
 
-private string choice(string[] choices)
+private string random_choice(string[] choices)
 {
+    import std.random: uniform;
+    
     return choices[uniform(0, $)];
 }
 

@@ -1,9 +1,10 @@
 module libs.expression.parser;
 
-import std.stdio;
-
-import libs.expression.particles;
-import libs.expression.tokenizer: Token, TokenType;
+private
+{
+    import libs.expression.particles;
+    import libs.expression.lexer: Token, TokenType;
+}
 
 Particle[] parse(Token[] tokens)
 {
@@ -80,9 +81,9 @@ Particle[] parse(Token[] tokens)
 
 Particle[] parse(string message)
 {
-    import libs.expression.tokenizer: tokenize;
+    import libs.expression.lexer: lex;
     
-    return parse(tokenize(message));
+    return parse(lex(message));
 }
 
 unittest

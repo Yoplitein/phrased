@@ -11,13 +11,13 @@ void main(string[] args)
 {
     string[][string] defines;
     
-    void define_handler(string _, string option)
+    void define_handler(string optionName, string optionValue)
     {
         string key;
         string value;
         bool haveKey;
         
-        foreach(character; option)
+        foreach(character; optionValue)
         {
             if(!haveKey && character == '=')
             {
@@ -51,10 +51,14 @@ void main(string[] args)
     }
     
     auto sentence = args[1 .. $].join(" ");
+    auto lexed = sentence.lex;
     auto parsed = sentence.parse;
     
-    /*foreach(token; parsed)
-        writeln(token);*/
+    foreach(token; lexed)
+        writeln(token);
+    
+    foreach(particle; parsed)
+        writeln(particle);
     
     writeln(parsed.build);
 }
