@@ -92,13 +92,14 @@ Token[] lex(string expression)
     
     push_word;
     
-    return result;
+    return tokens;
 }
 
-private void lex_word(bool includeSpace = false)
+private int /*charsRead*/ lex_word(bool includeSpace = false)
 {
     bool haveWord = true;
     bool pushSpace = false;
+    int charsRead;
     
     void complete()
     {
@@ -108,11 +109,13 @@ private void lex_word(bool includeSpace = false)
             push_space;
     }
     
-    while(haveWord && !buffer.empty)
+    loop: while(haveWord && !buffer.empty)
     {
         switch(buffer.peek)
         {
             case '\\':
+                charsRead++;
+                
                 buffer.seek;
                 
                 goto default;
@@ -121,40 +124,45 @@ private void lex_word(bool includeSpace = false)
                 if(includeSpace)
                     pushSpace = true;
                 
-                goto case;
+                complete;
+                
+                break loop;
+            case '$':
+                if(!inMacro)
+                    complete;
+                else
+                    goto default;
+                
+                break loop;
             case ')':
-                if(true) //TODO: determine if this token is relevant
+                if(inMacro)
                     complete;
                 else
                     goto default;
                 
-                return;
+                break loop;
+            case '{':
+                complete;
+                
+                break loop;
             case '|':
-                if(true) //TODO: determine if this token is relevant
-                    complete;
-                else
-                    goto default;
-                
-                return;
             case '}':
-                if(true) //TODO: determine if this token is relevant
+                if(choiceLevel > 0)
                     complete;
                 else
                     goto default;
                 
-                return;
+                break loop;
             default:
                 push_character(buffer.peek);
+                
+                charsRead++;
         }
         
         buffer.seek;
     }
     
-    /*buffer.seek(-2);
-    push_word;
-    
-    if(pushSpace)
-        push_space;*/
+    return charsRead;
 }
 
 private void lex_macro()
@@ -168,12 +176,17 @@ private void lex_macro()
     
     if(complex)
     {
+        inMacro = true;
+        
         buffer.seek;
         
         while(buffer.peek != ')')
-            lex_word(true);
+            if(lex_word(true) == 0)
+                throw new LexerError("unterminated macro");
         
         buffer.seek;
+        
+        inMacro = false;
     }
     else
         lex_word;
@@ -183,20 +196,56 @@ private void lex_macro()
 
 private void lex_choice()
 {
-    throw new Exception("not implemented");
+    buffer.seek;
+    push(TokenType.CHOICE_START);
+    
+    choiceLevel++;
+    
+    loop: while(true)
+    {
+        switch(buffer.peek)
+        {
+            case '\\':
+                goto default;
+            case -1: //probably won't ever happen but just for safety's sake
+                throw new LexerError("unterminated choice expression");
+            case '$':
+                lex_macro;
+                
+                break;
+            case '|':
+                push(TokenType.CHOICE_SEPARATOR);
+                buffer.seek;
+                
+                goto default;
+            case '{':
+                lex_choice;
+                
+                break;
+            case '}':
+                buffer.seek;
+                
+                break loop;
+            default:
+                if(lex_word(true) == 0)
+                    throw new LexerError("unterminated choice expression");
+        }
+    }
+    
+    push(TokenType.CHOICE_END);
+    
+    choiceLevel--;
 }
 
 private void push(TokenType type, string value = "")
 {
-    result ~= [Token(type, value)];
-    writefln(`pushing Token(%s, "%s")`, type, value);
+    tokens ~= [Token(type, value)];
+    //writefln(`pushing Token(%s, "%s")`, type, value);
 }
 
 private void push_word()
 {
-    if(currentWord == "")
-        throw new LexerError("currentWord is null");
-    
+    if(currentWord != "")
         push(TokenType.WORD, currentWord);
     
     currentWord = null;
@@ -217,14 +266,16 @@ private void push_space()
 
 private void reset(string expression)
 {
-    result = null;
+    tokens = null;
     currentWord = null;
+    inMacro = false;
     choiceLevel = 0;
     buffer = Buffer(expression);
 }
 
-private Token[] result;
+private Token[] tokens;
 private string currentWord;
+private bool inMacro;
 private int choiceLevel;
 private Buffer buffer;
 

@@ -61,7 +61,10 @@ void main(string[] args)
         writeln(particle);
     
     writeln(parsed.build);*/
+    auto lexed = r"word\\\ word $var word $(macro arg) word {a|b{c|d{e|f}}} word".lex;
     
-    foreach(token; r"many\\ wef words before $abc and $(def $var) after".lex)
+    writeln("!!!!! lex complete !!!!!");
+    
+    foreach(token; lexed)
         writefln(`%11s: "%s"`, token.type, token.value);
 }
