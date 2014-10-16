@@ -43,7 +43,7 @@ void main(string[] args)
     
     database.update(defines);
     
-    if(args.length == 1)
+    /*if(args.length == 1)
     {
         stderr.writeln("Not enough arguments");
         
@@ -60,5 +60,8 @@ void main(string[] args)
     foreach(particle; parsed)
         writeln(particle);
     
-    writeln(parsed.build);
+    writeln(parsed.build);*/
+    
+    foreach(token; r"many\\ wef words before $abc and $(def $var) after".lex)
+        writefln(`%11s: "%s"`, token.type, token.value);
 }

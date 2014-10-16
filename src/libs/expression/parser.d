@@ -54,11 +54,11 @@ Particle[] parse(Token[] tokens)
                 currentChoice = new ParticleSequence;
                 
                 break;
-            case VARIABLE_START:
+            case MACRO_START:
                 parsingVariable = true;
                 
                 break;
-            case VARIABLE_END:
+            case MACRO_END:
                 parsingVariable = false;
                 
                 if(currentVariable.length == 0)
