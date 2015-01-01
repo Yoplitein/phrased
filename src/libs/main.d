@@ -61,10 +61,17 @@ void main(string[] args)
         writeln(particle);
     
     writeln(parsed.build);*/
-    auto lexed = r"word\\\ word $var word $(macro arg) word {a|b{c|d{e|f}}} word".lex;
+    auto lexed = r"word\\\ word $var word $(macro arg) word {a\||b{c|d{e|f}}} word".lex;
     
     writeln("!!!!! lex complete !!!!!");
     
     foreach(token; lexed)
-        writefln(`%11s: "%s"`, token.type, token.value);
+        writefln(`%16s: "%s"`, token.type, token.value);
+    
+    auto parsed = lexed.parse;
+    
+    writeln("!!!!! parse complete !!!!!");
+    
+    foreach(particle; parsed)
+        writeln(particle);
 }

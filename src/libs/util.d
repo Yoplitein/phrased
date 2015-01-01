@@ -64,3 +64,40 @@ unittest
     }
     catch(Exception) {}
 }
+
+class BufferException: Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
+struct Buffer(Type)
+{
+    Type[] data;
+    size_t index;
+    
+    this(Type[] data)
+    {
+        this.data = data;
+    }
+    
+    Type peek(size_t offset = 0)
+    {
+        if(index + offset >= data.length)
+            throw new BufferException("buffer overflow");
+        else
+            return data[index + offset];
+    }
+    
+    void advance()
+    {
+        index++;
+    }
+    
+    bool finished()
+    {
+        return index >= data.length;
+    }
+}

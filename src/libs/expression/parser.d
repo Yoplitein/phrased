@@ -2,11 +2,19 @@ module libs.expression.parser;
 
 private
 {
+    import libs.util: Buffer;
     import libs.expression.particles;
     import libs.expression.lexer: Token, TokenType;
 }
 
 Particle[] parse(Token[] tokens)
+{
+    reset(tokens);
+    
+    return result;
+}
+
+/*Particle[] parse(Token[] tokens)
 {
     Particle[] result;
     Particle[] choices;
@@ -77,7 +85,7 @@ Particle[] parse(Token[] tokens)
         }
     
     return result;
-}
+}*/
 
 Particle[] parse(string message)
 {
@@ -85,6 +93,15 @@ Particle[] parse(string message)
     
     return parse(lex(message));
 }
+
+private void reset(Token[] tokens)
+{
+    result = null;
+    buffer = typeof(buffer)(tokens);
+}
+
+private Particle[] result;
+private Buffer!Token buffer;
 
 unittest
 {

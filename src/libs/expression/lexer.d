@@ -1,6 +1,11 @@
 module libs.expression.lexer;
 
-import std.stdio;
+private
+{
+    import std.stdio;
+    
+    import libs.util;
+}
 
 enum TokenType
 {
@@ -12,44 +17,13 @@ enum TokenType
     MACRO_END,
 }
 
-private enum EOF = -1;
-
 struct Token
 {
     TokenType type;
     string value = null;
 }
 
-private struct Buffer
-{
-    string data;
-    size_t index;
-    
-    this(string data)
-    {
-        this.data = data;
-    }
-    
-    immutable(char) peek(size_t offset = 0)
-    {
-        if(index + offset >= data.length)
-            return cast(char)EOF;
-        else
-            return data[index + offset];
-    }
-    
-    void advance()
-    {
-        index++;
-    }
-    
-    bool eof()
-    {
-        return index >= data.length;
-    }
-}
-
-class LexerError: Exception
+class LexerException: Exception
 {
     this(string msg)
     {
@@ -61,7 +35,7 @@ Token[] lex(string expression)
 {
     reset(expression);
     
-    while(!buffer.eof)
+    while(!buffer.finished)
     {
         switch(buffer.peek)
         {
@@ -101,7 +75,7 @@ private int /*charsRead*/ lex_word(bool includeSpace = false)
             push_space;
     }
     
-    loop: while(haveWord && !buffer.eof)
+    loop: while(haveWord && !buffer.finished)
     {
         switch(buffer.peek)
         {
@@ -111,7 +85,6 @@ private int /*charsRead*/ lex_word(bool includeSpace = false)
                 buffer.advance;
                 
                 goto default;
-            case EOF:
             case ' ':
                 if(includeSpace)
                     pushSpace = true;
@@ -175,7 +148,7 @@ private void lex_macro()
         
         while(buffer.peek != ')')
             if(lex_word(true) == 0)
-                throw new LexerError("unterminated macro");
+                throw new LexerException("unterminated macro");
         
         buffer.advance;
         
@@ -200,8 +173,8 @@ private void lex_choice()
         {
             case '\\':
                 goto default;
-            case EOF: //probably won't ever happen but just for safety's sake
-                throw new LexerError("unterminated choice expression");
+            /*case BUFFER_FINISHED: //probably won't ever happen but just for safety's sake
+                throw new LexerException("unterminated choice expression");*/
             case '$':
                 lex_macro;
                 
@@ -221,7 +194,7 @@ private void lex_choice()
                 break loop;
             default:
                 if(lex_word(true) == 0)
-                    throw new LexerError("unterminated choice expression");
+                    throw new LexerException("unterminated choice expression");
         }
     }
     
@@ -262,7 +235,7 @@ private void reset(string expression)
     currentWord = null;
     inMacro = false;
     choiceLevel = 0;
-    buffer = Buffer(expression);
+    buffer = typeof(buffer)(expression);
 }
 
 //TODO: unittests
@@ -271,4 +244,4 @@ private Token[] tokens;
 private string currentWord;
 private bool inMacro;
 private int choiceLevel;
-private Buffer buffer;
+private Buffer!(immutable(char)) buffer;
