@@ -3,6 +3,7 @@
 +/
 module phrased;
 
+public import phrased.dictionary;
 public import phrased.expression;
 
 /++
