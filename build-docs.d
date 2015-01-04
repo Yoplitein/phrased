@@ -8,9 +8,10 @@ import std.algorithm: filter;
 import std.file: SpanMode, dirEntries, mkdir, exists;
 import std.path: stripExtension;
 import std.process: execute;
-import std.string: split, replace, format;
+import std.stdio: write;
+import std.string: split, join, replace, format;
 
-enum command = "/usr/bin/env dmd -c -o- -Dfdocs/%s.html -w -Isrc src/macros.ddoc %s";
+enum command = "/usr/bin/env dmd -c -o- -Dfdocs/%s.html -w -Isrc src/macros.ddoc %s%s";
 
 string to_module(string path)
 {
@@ -27,6 +28,14 @@ void main(string[] args)
     if(!"docs".exists)
         mkdir("docs");
     
+    auto additionalArgs = args[1 .. $].join(" ");
+    
     foreach(file; all_files)
-        execute(command.format(file.to_module, file).split(" "));
+    {
+        auto fullCommand = command.format(file.to_module, file, additionalArgs != null ? " " ~ additionalArgs : "");
+        auto result = execute(fullCommand.split(" "));
+        
+        if(result.status != 0)
+            write(result.output);
+    }
 }

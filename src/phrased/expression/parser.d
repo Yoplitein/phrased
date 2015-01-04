@@ -59,9 +59,7 @@ class SequenceNode: Node
         children.put(node);
     }
     
-    /++
-        See $(SYMBOL_LINK Node.resolve).
-    +/
+    ///See $(SYMBOL_LINK Node.resolve).
     override string resolve()
     {
         auto result = appender!string;
@@ -85,9 +83,7 @@ class WordNode: Node
         this.contents = contents;
     }
     
-    /++
-        See $(SYMBOL_LINK Node.resolve).
-    +/
+    ///See $(SYMBOL_LINK Node.resolve).
     override string resolve()
     {
         return contents;
@@ -115,9 +111,7 @@ class MacroNode: Node
         this.arguments = arguments;
     }
     
-    /++
-        See $(SYMBOL_LINK Node.resolve).
-    +/
+    ///See $(SYMBOL_LINK Node.resolve).
     override string resolve()
     {
         import std.string: format;
@@ -144,9 +138,7 @@ class ChoiceNode: SequenceNode
         super(choices);
     }
     
-    /++
-        See $(SYMBOL_LINK Node.resolve).
-    +/
+    ///See $(SYMBOL_LINK Node.resolve).
     override string resolve()
     {
         import std.random: uniform;
@@ -229,7 +221,7 @@ struct ExpressionParser
                 currentPart.add(parse);
         }
         
-        if(tokens.empty && tokens.last.type != TokenType.CHOICE_END)
+        if(tokens.empty && tokens.previous.type != TokenType.CHOICE_END)
             throw new ParserException("Unterminated choice");
         
         result.add(currentPart);
@@ -269,7 +261,7 @@ struct ExpressionParser
                 while(!tokens.empty && tokens.front.type != TokenType.MACRO_END)
                     result.arguments.add(parse);
                 
-                if(tokens.empty && tokens.last.type != TokenType.MACRO_END)
+                if(tokens.empty && tokens.previous.type != TokenType.MACRO_END)
                     throw new ParserException("Unterminated macro");
                 
                 break;

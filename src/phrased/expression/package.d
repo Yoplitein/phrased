@@ -41,10 +41,13 @@ package struct ExpressionRange(Type)
         return data[index];
     }
     
-    Type last()
+    Type previous()
     {
-        if(index == 0 || index - 1 >= data.length)
-            throw new PhrasedException("ExpressionRange error: attempting to fetch last element of an empty range");
+        if(index == 0)
+            throw new PhrasedException("ExpressionRange error: attempting to fetch previous element of an unpopped range");
+        
+        if(index - 1 >= data.length)
+            throw new PhrasedException("ExpressionRange error: attempting to fetch previous element of an empty range");
         
         return data[index - 1];
     }
