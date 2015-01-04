@@ -1,9 +1,14 @@
+/++
+    Package for an implementation of the phrasal template language used within phrased.
+    
+    phrased.expression.lexer and phrased.expression.parser are publically imported.
++/
 module phrased.expression;
 
 public import phrased.expression.lexer;
 public import phrased.expression.parser;
 
-struct ExpressionRange(Type)
+package struct ExpressionRange(Type)
 {
     Type[] data;
     size_t index;
@@ -77,42 +82,9 @@ unittest
     assert(range.slice(mark) == "bcdef");
 }
 
-/*private struct TokenRange
-{
-    Token[] data;
-    size_t index;
-    
-    this(Token[] data)
-    {
-        this.data = data;
-    }
-    
-    void popFront()
-    {
-        index++;
-    }
-    
-    @property:
-    
-    Token front()
-    {
-        if(empty)
-            throw new ParserException("Internal parser error: unexpected end of tokens");
-        
-        return data[index];
-    }
-    
-    Token last()
-    {
-        return data[index - 1];
-    }
-    
-    bool empty()
-    {
-        return index >= data.length;
-    }
-}*/
-
+/++
+    Shortcut function to lex, parse and resolve a marked up string.
++/
 string evaluate(string expression)
 {
     return expression.lex.parse.resolve;

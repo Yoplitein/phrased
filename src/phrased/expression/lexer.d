@@ -1,3 +1,6 @@
+/++
+    Data structures and functions for lexing a string into a stream of tokens, to simplify later parsing.
++/
 module phrased.expression.lexer;
 
 private
@@ -8,19 +11,30 @@ private
     import phrased.expression: ExpressionRange;
 }
 
+/++
+    The string and character type used throughout this module.
+    
+    dstring/dchar are required by std.uni
++/
 alias string_t = dstring;
-alias char_t = dchar;
+alias char_t = dchar; ///ditto
 
+/++
+    The different types of tokens.
++/
 enum TokenType
 {
-    WORD,
-    CHOICE_START,
-    CHOICE_END,
-    CHOICE_SEPARATOR,
-    MACRO_START,
-    MACRO_END,
+    WORD, ///A simple word
+    CHOICE_START, ///The start of a choice expression ($(TT {))
+    CHOICE_END, ///The end of a choice expression ($(TT }))
+    CHOICE_SEPARATOR, ///The separator between elements of a choice expression ($(TT |))
+    MACRO_START, ///The start of a macro expression ($(TT $(DOLLAR)) for simple ones and $(TT $(DOLLAR)$(LPAREN)) for complex ones)
+    MACRO_END, ///The end of a macro expression (empty for simple ones, and $(TT $(RPAREN)) for complex ones)
 }
 
+/++
+    The exception thrown when lexical analysis fails.
++/
 class LexerException: PhrasedException
 {
     this(string msg)
@@ -29,24 +43,35 @@ class LexerException: PhrasedException
     }
 }
 
+/++
+    Representation of a single token
++/
 struct Token
 {
-    TokenType type;
-    string_t value = null;
+    TokenType type; ///The type of the token
+    string_t value = null; ///The value of the token, if applicable
     //TODO: line, column
 }
 
+/++
+    A container for data used during lexing.
+    
+    See $(SYMBOL_LINK lex) for the recommended way to use this.
++/
 struct ExpressionLexer
 {
     import std.uni: isWhite;
     
-    ExpressionRange!char_t data;
-    Token[] tokens;
-    int macroLevel;
-    int choiceLevel;
+    private ExpressionRange!char_t data;
+    private int macroLevel;
+    private int choiceLevel;
+    Token[] result; ///The resulting sequence of tokens from a successful lex
     
-    alias tokens this;
+    alias result this;
     
+    /++
+        Populate internal data structures and perform lexical analysis.
+    +/
     this(string_t expression)
     {
         data = ExpressionRange!char_t(expression.dup);
@@ -57,7 +82,7 @@ struct ExpressionLexer
     
     private void add(ValueType)(TokenType type, ValueType value)
     {
-        tokens ~= Token(type, value.to!string_t);
+        result ~= Token(type, value.to!string_t);
     }
     
     private void ensure_nonempty(string message)
@@ -123,7 +148,7 @@ struct ExpressionLexer
             while(!data.empty && data.front != ')')
                 lex;
             
-            if(tokens[$ - 2].type == TokenType.MACRO_START && tokens[$ - 1].value == "")
+            if(result[$ - 2].type == TokenType.MACRO_START && result[$ - 1].value == "")
                 throw new LexerException("Malformed macro");
             
             ensure_nonempty("Unterminated macro");
@@ -136,7 +161,7 @@ struct ExpressionLexer
             add(TokenType.MACRO_START, "$");
             lex_word(true);
             
-            if(tokens[$ - 1].value == "")
+            if(result[$ - 1].value == "")
                 throw new LexerException("Malformed macro");
             
             add(TokenType.MACRO_END, "");
@@ -211,9 +236,13 @@ struct ExpressionLexer
     }
 }
 
+/++
+    Shortcut to instantiate $(SYMBOL_LINK ExpressionLexer) and get the result.
++/
 Token[] lex(StringType)(StringType source)
+if(is(StringType == string) || is(StringType == wstring) || is(StringType == dstring))
 {
-    return ExpressionLexer(source.to!string_t).tokens;
+    return ExpressionLexer(source.to!string_t).result;
 }
 
 //unittest helpers

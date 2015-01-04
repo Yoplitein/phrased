@@ -1,5 +1,5 @@
 #phrased
-Phrased is an application/library for evaluating [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template).
+Phrased is a library for evaluating [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template).
 
 <!-- TODO: flesh this out a bit more -->
 
@@ -14,17 +14,17 @@ The syntax is composed of three basic elements:
 A word is a sequence of chracters that are either
 
 * not whitespace, as defined by Unicode
-* not an unescaped character used to delimit macro or choice constructs
+* not an unescaped character used to delimit macro or choice expressions
 
 ###Macros
-A macro is a construct of the form `$macroName` or  `$(macroName arg1 arg2 ...)`.
+A macro is an expression of the form `$macroName` or  `$(macroName arg1 arg2 ...)`.
 
 Macros are either a D function, or a category of word resolved from a database.
 Function macros can (theoretically) perform any kind of processing on the arguments, returning the output to the parser for reevaluation, or modifying the word database, or perhaps other functions still.
 Variable macros 
 
 ###Choices
-A choice is a construct of the form `{first choice|second choice|...}`.
+A choice is an expression of the form `{first choice|second choice|...}`.
 
 When building a sentence one of the options, delimited by the pipe (`|`), appears in the final output.
 

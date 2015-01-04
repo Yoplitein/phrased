@@ -3,17 +3,5 @@
     "description": "A phrasal template markup language and evaluator",
     "copyright": "Copyright © 2014, Yoplitein",
     "authors": ["Yoplitein"],
-    "configurations": [
-        {
-            "name": "default",
-            "targetType": "executable",
-            "excludedSourceFiles": ["src/scratchpad.d"],
-        },
-        {
-            "name": "scratchpad",
-            "targetType": "executable",
-            "targetName": "scratchpad",
-            "excludedSourceFiles": ["src/phrased/main.d"],
-        },
-    ],
+    "sourceFiles": ["src/macros.ddoc"],
 }

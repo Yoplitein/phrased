@@ -1,9 +1,9 @@
 .dub/*
 .c9/*
+docs/*
 *.exe
 *.txt
 *.db
+*.a
 dub.selections.json
-src/scratchpad.d
-phrased
-scratchpad
+__test__library__

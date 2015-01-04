@@ -1,3 +1,7 @@
+/++
+    Data structures and functions for parsing a stream of tokens into a tree of $(SYMBOL_LINK Node)s,
+    which can then be resolved into a string.
++/
 module phrased.expression.parser;
 
 private
@@ -7,6 +11,9 @@ private
     import phrased.expression.lexer: Token;
 }
 
+/++
+    The exception thrown when parsing fails.
++/
 class ParserException: PhrasedException
 {
     this(string msg)
@@ -15,29 +22,46 @@ class ParserException: PhrasedException
     }
 }
 
+/++
+    Basic interface of a node in the expression tree.
++/
 interface Node
 {
+    /++
+        Resolve this node, and any subnodes, into a string.
+    +/
     string resolve();
 }
 
+/++
+    A node containing a sequence of subnodes.
++/
 class SequenceNode: Node
 {
     import std.array: Appender, appender;
     
-    Appender!(Node[]) children;
+    Appender!(Node[]) children; ///The subnodes within this node
     
+    ///
     this() {}
     
+    ///
     this(Node[] children)
     {
         this.children = appender(children);
     }
     
+    /++
+        Add a child node to the end of the list of subnodes.
+    +/
     void add(Node node)
     {
         children.put(node);
     }
     
+    /++
+        See $(SYMBOL_LINK Node.resolve).
+    +/
     override string resolve()
     {
         auto result = appender!string;
@@ -49,37 +73,51 @@ class SequenceNode: Node
     }
 }
 
+/++
+    A node containing a single word.
++/
 class WordNode: Node
 {
-    string contents;
+    string contents; ///The word contained in this node
     
     this(string contents)
     {
         this.contents = contents;
     }
     
+    /++
+        See $(SYMBOL_LINK Node.resolve).
+    +/
     override string resolve()
     {
         return contents;
     }
 }
 
+/++
+    A node representing a macro expression.
++/
 class MacroNode: Node
 {
-    WordNode name;
-    SequenceNode arguments;
+    WordNode name; ///The name of the macro
+    SequenceNode arguments; ///The arguments to the macro
     
+    ///
     this()
     {
         arguments = new SequenceNode;
     }
     
+    ///
     this(WordNode name, SequenceNode arguments)
     {
         this.name = name;
         this.arguments = arguments;
     }
     
+    /++
+        See $(SYMBOL_LINK Node.resolve).
+    +/
     override string resolve()
     {
         import std.string: format;
@@ -89,15 +127,26 @@ class MacroNode: Node
     }
 }
 
+/++
+    A node representing a choice expression.
+    
+    Inherits from $(SYMBOL_LINK SequenceNode) as the functionality is mostly the same,
+    except a single child node is chosen while resolving, instead of concatenating them all.
++/
 class ChoiceNode: SequenceNode
 {
+    ///
     this() {}
     
-    this(Node[] children)
+    ///
+    this(Node[] choices)
     {
-        super(children);
+        super(choices);
     }
     
+    /++
+        See $(SYMBOL_LINK Node.resolve).
+    +/
     override string resolve()
     {
         import std.random: uniform;
@@ -106,15 +155,23 @@ class ChoiceNode: SequenceNode
     }
 }
 
+/++
+    A container for data used during parsing.
+    
+    See $(SYMBOL_LINK parse) for the recommended way to use this.
++/
 struct ExpressionParser
 {
     import std.conv: to;
     
     import phrased.expression.lexer: TokenType;
     
-    ExpressionRange!Token tokens;
-    SequenceNode result;
+    private ExpressionRange!Token tokens;
+    SequenceNode result; ///The resulting SequenceNode from a successful parse
     
+    /++
+        Populate internal data structures and peform parsing.
+    +/
     this(Token[] tokens)
     {
         this.tokens = ExpressionRange!Token(tokens);
@@ -226,6 +283,9 @@ struct ExpressionParser
     }
 }
 
+/++
+    Shortcut to instantiate $(SYMBOL_LINK ExpressionParser) and get the result.
++/
 SequenceNode parse(Token[] tokens)
 {
     return ExpressionParser(tokens).result;

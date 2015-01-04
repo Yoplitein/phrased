@@ -1,0 +1,33 @@
+SYMBOL_LINK = $(LINK2 #$1, $1)
+TT = <tt>$0</tt>
+
+DDOC_PSYMBOL = $0
+DDOC = <!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>$(TITLE)</title>
+    <meta charset="utf-8" />
+    <style type="text/css">
+        body
+        {
+            background-color: #D3D3D3;
+        }
+        
+        tt
+        {
+            background-color: #B3B3B3;
+        }
+        
+        table, tr, td
+        {
+            border-collapse: collapse;
+            border: 1px solid black;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>$(TITLE)</h1>
+    $(BODY)
+</body>
+</html>
