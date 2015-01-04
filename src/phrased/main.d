@@ -5,11 +5,10 @@ import std.getopt;
 import std.range: join;
 
 import phrased.expression;
-import phrased.database;
 
 void main(string[] args)
 {
-    string[][string] defines;
+    /*string[][string] defines;
     
     void define_handler(string optionName, string optionValue)
     {
@@ -43,7 +42,7 @@ void main(string[] args)
     
     database.update(defines);
     
-    /*if(args.length == 1)
+    if(args.length == 1)
     {
         stderr.writeln("Not enough arguments");
         

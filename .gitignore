@@ -5,5 +5,5 @@
 *.db
 dub.selections.json
 src/scratchpad.d
-libsengine
+phrased
 scratchpad

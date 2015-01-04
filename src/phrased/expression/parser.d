@@ -1,8 +1,13 @@
 module phrased.expression.parser;
 
-private import phrased.expression.lexer: Token;
+private
+{
+    import phrased: PhrasedException;
+    import phrased.expression: ExpressionRange;
+    import phrased.expression.lexer: Token;
+}
 
-class ParserException: Exception
+class ParserException: PhrasedException
 {
     this(string msg)
     {
@@ -101,55 +106,18 @@ class ChoiceNode: SequenceNode
     }
 }
 
-//TODO: combine this with lexer's DataRange?
-private struct TokenRange
-{
-    Token[] data;
-    size_t index;
-    
-    this(Token[] data)
-    {
-        this.data = data;
-    }
-    
-    void popFront()
-    {
-        index++;
-    }
-    
-    @property:
-    
-    Token front()
-    {
-        if(empty)
-            throw new ParserException("Internal parser error: unexpected end of tokens");
-        
-        return data[index];
-    }
-    
-    Token last()
-    {
-        return data[index - 1];
-    }
-    
-    bool empty()
-    {
-        return index >= data.length;
-    }
-}
-
 struct ExpressionParser
 {
     import std.conv: to;
     
     import phrased.expression.lexer: TokenType;
     
-    TokenRange tokens;
+    ExpressionRange!Token tokens;
     SequenceNode result;
     
     this(Token[] tokens)
     {
-        this.tokens = TokenRange(tokens);
+        this.tokens = ExpressionRange!Token(tokens);
         result = new SequenceNode;
         
         while(!this.tokens.empty)

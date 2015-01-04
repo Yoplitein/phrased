@@ -1,6 +1,12 @@
 module phrased.expression.lexer;
 
-private import std.conv: to;
+private
+{
+    import std.conv: to;
+    
+    import phrased: PhrasedException;
+    import phrased.expression: ExpressionRange;
+}
 
 alias string_t = dstring;
 alias char_t = dchar;
@@ -15,7 +21,7 @@ enum TokenType
     MACRO_END,
 }
 
-class LexerException: Exception
+class LexerException: PhrasedException
 {
     this(string msg)
     {
@@ -30,88 +36,11 @@ struct Token
     //TODO: line, column
 }
 
-private struct DataRange
-{
-    char_t[] data;
-    size_t index;
-    
-    this(string_t data)
-    {
-        this.data = data.dup;
-    }
-    
-    void popFront()
-    {
-        index++;
-    }
-    
-    char_t[] slice(size_t previousIndex)
-    {
-        if(previousIndex > index)
-            throw new LexerException("Internal lexer error: invalid slice");
-        
-        return data[previousIndex .. index];
-    }
-    
-    void seek(size_t index)
-    {
-        if(index < 0 || index > data.length)
-            throw new LexerException("Internal lexer error: attempted to seek out of bounds");
-        
-        this.index = index;
-    }
-    
-    @property:
-    
-    char_t front()
-    {
-        if(empty)
-            throw new LexerException("Internal lexer error: unexpected end of data");
-        
-        return data[index];
-    }
-    
-    bool empty()
-    {
-        return index >= data.length;
-    }
-    
-    size_t save()
-    {
-        return index;
-    }
-}
-
-unittest
-{
-    string_t test = "$bcdef";
-    auto range = DataRange(test);
-    
-    assert(range.front == '$');
-    assert(range.save == 0);
-    assert(range.front.special);
-    range.popFront;
-    assert(range.front == 'b');
-    assert(range.save == 1);
-    
-    auto mark = range.save;
-    
-    range.popFront;
-    range.popFront;
-    range.popFront;
-    range.popFront;
-    range.popFront;
-    assert(range.empty);
-    assert(range.slice(mark) == "bcdef");
-    range.seek(0);
-    assert(range.front == '$');
-}
-
 struct ExpressionLexer
 {
     import std.uni: isWhite;
     
-    DataRange data;
+    ExpressionRange!char_t data;
     Token[] tokens;
     int macroLevel;
     int choiceLevel;
@@ -120,7 +49,7 @@ struct ExpressionLexer
     
     this(string_t expression)
     {
-        data = DataRange(expression);
+        data = ExpressionRange!char_t(expression.dup);
         
         while(!data.empty)
             lex;
@@ -311,7 +240,7 @@ private void expect_exception(string source)
         source.lex;
         assert(false, "Expression \"" ~ source ~ "\" should have thrown an exception");
     }
-    catch(LexerException err) {}
+    catch(PhrasedException err) {}
 }
 
 unittest
