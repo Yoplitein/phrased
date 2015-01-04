@@ -1,11 +1,11 @@
-module libs.main;
+module phrased.main;
 
 import std.stdio;
 import std.getopt;
 import std.range: join;
 
-import libs.expression;
-import libs.database;
+import phrased.expression;
+import phrased.database;
 
 void main(string[] args)
 {
@@ -61,17 +61,5 @@ void main(string[] args)
         writeln(particle);
     
     writeln(parsed.build);*/
-    auto lexed = r"word\\\ word $var word $(macro arg) word {a\||b{c|d{e|f}}} word".lex;
     
-    writeln("!!!!! lex complete !!!!!");
-    
-    foreach(token; lexed)
-        writefln(`%16s: "%s"`, token.type, token.value);
-    
-    auto parsed = lexed.parse;
-    
-    writeln("!!!!! parse complete !!!!!");
-    
-    foreach(particle; parsed)
-        writeln(particle);
 }

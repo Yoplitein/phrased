@@ -1,4 +1,4 @@
-module libs.database;
+module phrased.database;
 
 interface Database
 {

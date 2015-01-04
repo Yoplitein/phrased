@@ -1,6 +1,6 @@
-module libs.expression.parser;
+module phrased.expression.parser;
 
-private import libs.expression.lexer: Token;
+private import phrased.expression.lexer: Token;
 
 class ParserException: Exception
 {
@@ -142,7 +142,7 @@ struct ExpressionParser
 {
     import std.conv: to;
     
-    import libs.expression.lexer: TokenType;
+    import phrased.expression.lexer: TokenType;
     
     TokenRange tokens;
     SequenceNode result;

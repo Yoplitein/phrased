@@ -13,7 +13,7 @@
             "name": "scratchpad",
             "targetType": "executable",
             "targetName": "scratchpad",
-            "excludedSourceFiles": ["src/libs/main.d"],
+            "excludedSourceFiles": ["src/phrased/main.d"],
         },
     ],
 }

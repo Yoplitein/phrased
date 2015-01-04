@@ -1,4 +1,4 @@
-module libs.expression.lexer;
+module phrased.expression.lexer;
 
 private import std.conv: to;
 

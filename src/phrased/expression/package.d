@@ -1,7 +1,7 @@
-module libs.expression;
+module phrased.expression;
 
-public import libs.expression.lexer;
-public import libs.expression.parser;
+public import phrased.expression.lexer;
+public import phrased.expression.parser;
 
 string evaluate(string expression)
 {

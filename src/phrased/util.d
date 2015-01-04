@@ -1,4 +1,4 @@
-module libs.util;
+module phrased.util;
 
 struct Stack(Type)
 {
