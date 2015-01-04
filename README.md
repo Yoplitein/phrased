@@ -1,5 +1,5 @@
-#libsengine
-libsengine is an application/library for evaluating [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template).
+#phrased
+Phrased is an application/library for evaluating [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template).
 
 <!-- TODO: flesh this out a bit more -->
 

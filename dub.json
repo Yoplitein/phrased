@@ -1,11 +1,8 @@
 {
-    "name": "libsengine",
-    "description": "A minimal D application.",
+    "name": "phrased",
+    "description": "A phrasal template markup language and evaluator",
     "copyright": "Copyright © 2014, Yoplitein",
     "authors": ["Yoplitein"],
-    "dependencies": {
-        "d2sqlite3": ">=0.1.0",
-    },
     "configurations": [
         {
             "name": "default",
@@ -19,9 +16,4 @@
             "excludedSourceFiles": ["src/libs/main.d"],
         },
     ],
-    "buildTypes": {
-        "debug": {
-            "buildOptions": ["debugMode", "debugInfo", "unittests"],
-        },
-    },
 }
