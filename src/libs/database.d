@@ -112,5 +112,5 @@ RuntimeDatabase database;
 static this()
 {
     //TODO: compile-time selection of database driver
-    database = new RuntimeDatabase(new PlaintextDatabase);
+    //database = new RuntimeDatabase(new PlaintextDatabase);
 }

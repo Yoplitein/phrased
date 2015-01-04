@@ -1,11 +1,9 @@
 module libs.expression.lexer;
 
-private
-{
-    import std.stdio;
-    
-    import libs.util;
-}
+private import std.conv: to;
+
+alias string_t = dstring;
+alias char_t = dchar;
 
 enum TokenType
 {
@@ -17,12 +15,6 @@ enum TokenType
     MACRO_END,
 }
 
-struct Token
-{
-    TokenType type;
-    string value = null;
-}
-
 class LexerException: Exception
 {
     this(string msg)
@@ -31,217 +23,546 @@ class LexerException: Exception
     }
 }
 
-Token[] lex(string expression)
+struct Token
 {
-    reset(expression);
-    
-    while(!buffer.finished)
-    {
-        switch(buffer.peek)
-        {
-            case ' ':
-                push_space;
-                
-                break;
-            case '$':
-                lex_macro;
-                
-                break;
-            case '{':
-                lex_choice;
-                
-                break;
-            default:
-                lex_word;
-        }
-    }
-    
-    push_word;
-    
-    return tokens;
+    TokenType type;
+    string_t value = null;
+    //TODO: line, column
 }
 
-private int /*charsRead*/ lex_word(bool includeSpace = false)
+private struct DataRange
 {
-    bool haveWord = true;
-    bool pushSpace = false;
-    int charsRead;
+    char_t[] data;
+    size_t index;
     
-    void complete()
+    this(string_t data)
     {
-        push_word;
-        
-        if(pushSpace)
-            push_space;
+        this.data = data.dup;
     }
     
-    loop: while(haveWord && !buffer.finished)
+    void popFront()
     {
-        switch(buffer.peek)
+        index++;
+    }
+    
+    char_t[] slice(size_t previousIndex)
+    {
+        if(previousIndex > index)
+            throw new LexerException("Internal lexer error: invalid slice");
+        
+        return data[previousIndex .. index];
+    }
+    
+    void seek(size_t index)
+    {
+        if(index < 0 || index > data.length)
+            throw new LexerException("Internal lexer error: attempted to seek out of bounds");
+        
+        this.index = index;
+    }
+    
+    @property:
+    
+    char_t front()
+    {
+        if(empty)
+            throw new LexerException("Internal lexer error: unexpected end of data");
+        
+        return data[index];
+    }
+    
+    bool empty()
+    {
+        return index >= data.length;
+    }
+    
+    size_t save()
+    {
+        return index;
+    }
+}
+
+unittest
+{
+    string_t test = "$bcdef";
+    auto range = DataRange(test);
+    
+    assert(range.front == '$');
+    assert(range.save == 0);
+    assert(range.front.special);
+    range.popFront;
+    assert(range.front == 'b');
+    assert(range.save == 1);
+    
+    auto mark = range.save;
+    
+    range.popFront;
+    range.popFront;
+    range.popFront;
+    range.popFront;
+    range.popFront;
+    assert(range.empty);
+    assert(range.slice(mark) == "bcdef");
+    range.seek(0);
+    assert(range.front == '$');
+}
+
+struct ExpressionLexer
+{
+    import std.uni: isWhite;
+    
+    DataRange data;
+    Token[] tokens;
+    int macroLevel;
+    int choiceLevel;
+    
+    alias tokens this;
+    
+    this(string_t expression)
+    {
+        data = DataRange(expression);
+        
+        while(!data.empty)
+            lex;
+    }
+    
+    private void add(ValueType)(TokenType type, ValueType value)
+    {
+        tokens ~= Token(type, value.to!string_t);
+    }
+    
+    private void ensure_nonempty(string message)
+    {
+        if(data.empty)
+            throw new LexerException(message);
+    }
+    
+    private void lex()
+    {
+        switch(data.front)
         {
             case '\\':
-                charsRead++;
-                
-                buffer.advance;
-                
-                goto default;
-            case ' ':
-                if(includeSpace)
-                    pushSpace = true;
-                
-                complete;
-                
-                break loop;
+                return lex_escape;
             case '$':
-                if(!inMacro)
-                    complete;
-                else
-                    goto default;
-                
-                break loop;
+                return lex_macro;
+            case '{':
+                return lex_choice;
+            case '(':
+                return lex_symbol;
             case ')':
-                if(inMacro)
-                    complete;
-                else
-                    goto default;
+                if(macroLevel == 0)
+                    return lex_symbol;
                 
-                break loop;
-            case '{':
-                complete;
-                
-                break loop;
+                break;
             case '|':
             case '}':
-                if(choiceLevel > 0)
-                    complete;
-                else
-                    goto default;
+                if(choiceLevel == 0)
+                    return lex_symbol;
                 
-                break loop;
+                break;
             default:
-                push_character(buffer.peek);
+                if(data.front.isWhite)
+                    return lex_whitespace;
                 
-                charsRead++;
+                return lex_word;
         }
-        
-        buffer.advance;
     }
     
-    return charsRead;
-}
-
-private void lex_macro()
-{
-    buffer.advance;
-    
-    auto firstChar = buffer.peek;
-    bool complex = firstChar == '(';
-    
-    push(TokenType.MACRO_START);
-    
-    if(complex)
+    private void lex_escape()
     {
-        //[spacing intensifies]
-        inMacro = true;
-        
-        buffer.advance;
-        
-        while(buffer.peek != ')')
-            if(lex_word(true) == 0)
-                throw new LexerException("unterminated macro");
-        
-        buffer.advance;
-        
-        inMacro = false;
+        data.popFront;
+        ensure_nonempty("Unterminated escape");
+        add(TokenType.WORD, data.front);
+        data.popFront;
     }
-    else
-        lex_word;
     
-    push(TokenType.MACRO_END);
-}
-
-private void lex_choice()
-{
-    buffer.advance;
-    push(TokenType.CHOICE_START);
-    
-    choiceLevel++;
-    
-    loop: while(true)
+    private void lex_macro()
     {
-        switch(buffer.peek)
+        macroLevel++;
+        
+        data.popFront;
+        ensure_nonempty("Unterminated macro");
+        
+        if(data.front == '(')
         {
-            case '\\':
-                goto default;
-            /*case BUFFER_FINISHED: //probably won't ever happen but just for safety's sake
-                throw new LexerException("unterminated choice expression");*/
-            case '$':
-                lex_macro;
-                
-                break;
-            case '|':
-                push(TokenType.CHOICE_SEPARATOR);
-                buffer.advance;
-                
-                goto default;
-            case '{':
-                lex_choice;
-                
-                break;
-            case '}':
-                buffer.advance;
-                
-                break loop;
-            default:
-                if(lex_word(true) == 0)
-                    throw new LexerException("unterminated choice expression");
+            data.popFront;
+            ensure_nonempty("Unterminated macro");
+            add(TokenType.MACRO_START, "$(");
+            
+            lex_word(true);
+            
+            while(!data.empty && data.front != ')')
+                lex;
+            
+            if(tokens[$ - 2].type == TokenType.MACRO_START && tokens[$ - 1].value == "")
+                throw new LexerException("Malformed macro");
+            
+            ensure_nonempty("Unterminated macro");
+            data.popFront;
+            
+            add(TokenType.MACRO_END, ")");
         }
+        else
+        {
+            add(TokenType.MACRO_START, "$");
+            lex_word(true);
+            
+            if(tokens[$ - 1].value == "")
+                throw new LexerException("Malformed macro");
+            
+            add(TokenType.MACRO_END, "");
+        }
+        
+        macroLevel--;
     }
     
-    push(TokenType.CHOICE_END);
+    private void lex_choice()
+    {
+        choiceLevel++;
+        
+        data.popFront;
+        ensure_nonempty("Unterminated choice");
+        add(TokenType.CHOICE_START, "{");
+        
+        loop: while(!data.empty)
+        {
+            switch(data.front)
+            {
+                case '|':
+                    data.popFront;
+                    add(TokenType.CHOICE_SEPARATOR, "|");
+                    
+                    goto default;
+                case '}':
+                    data.popFront;
+                    add(TokenType.CHOICE_END, "}");
+                    
+                    break loop;
+                default:
+                    lex;
+            }
+        }
+        
+        choiceLevel--;
+    }
     
-    choiceLevel--;
-}
-
-private void push(TokenType type, string value = "")
-{
-    tokens ~= [Token(type, value)];
-}
-
-private void push_word()
-{
-    if(currentWord != "")
-        push(TokenType.WORD, currentWord);
+    private void lex_whitespace(bool discard = false)
+    {
+        auto mark = data.save;
+        
+        while(!data.empty && data.front.isWhite)
+            data.popFront;
+        
+        if(!discard)
+            add(TokenType.WORD, data.slice(mark));
+    }
     
-    currentWord = null;
-}
-
-private void push_character(char chr)
-{
-    currentWord ~= chr;
-}
-
-private void push_space()
-{
-    currentWord ~= " ";
+    private void lex_word(bool simple = false)
+    {
+        import std.uni: isAlpha;
+        
+        auto mark = data.save;
+        bool delegate() test;
+        
+        if(simple)
+            test = () => data.front.isAlpha;
+        else
+            test = () => !data.front.isWhite && !data.front.special;
+        
+        while(!data.empty && test())
+            data.popFront;
+        
+        add(TokenType.WORD, data.slice(mark));
+    }
     
-    push_word;
-    buffer.advance;
+    private void lex_symbol()
+    {
+        add(TokenType.WORD, data.front);
+        data.popFront;
+    }
 }
 
-private void reset(string expression)
+Token[] lex(StringType)(StringType source)
 {
-    tokens = null;
-    currentWord = null;
-    inMacro = false;
-    choiceLevel = 0;
-    buffer = typeof(buffer)(expression);
+    auto lexer = ExpressionLexer(source.to!string_t);
+    
+    return lexer.tokens;
 }
 
-//TODO: unittests
+//unittest helpers
+private void expect(string source, Token[] result)
+{
+    import std.stdio: writeln;
+    
+    auto lexed = source.lex;
+    bool success = lexed == result;
+    
+    if(!success)
+    {
+        writeln("Expression: ", source);
+        writeln("Wanted result: ", result);
+        writeln("Actual result: ", lexed);
+        assert(false);
+    }
+}
 
-private Token[] tokens;
-private string currentWord;
-private bool inMacro;
-private int choiceLevel;
-private Buffer!(immutable(char)) buffer;
+private void expect_exception(string source)
+{
+    try
+    {
+        source.lex;
+        assert(false, "Expression \"" ~ source ~ "\" should have thrown an exception");
+    }
+    catch(LexerException err) {}
+}
+
+unittest
+{
+    with(TokenType)
+    {
+        //simple words
+        " ".expect(
+            [
+                Token(WORD, " "),
+            ]
+        );
+        "\\$".expect(
+            [
+                Token(WORD, "$"),
+            ]
+        );
+        "|}".expect(
+            [
+                Token(WORD, "|"),
+                Token(WORD, "}"),
+            ]
+        );
+        "\\{|}".expect(
+            [
+                Token(WORD, "{"),
+                Token(WORD, "|"),
+                Token(WORD, "}"),
+            ]
+        );
+        "\"\"".expect(
+            [
+                Token(WORD, "\"\""),
+            ]
+        );
+        "abc".expect(
+            [
+                Token(WORD, "abc"),
+            ]
+        );
+        "(abc)".expect(
+            [
+                Token(WORD, "("),
+                Token(WORD, "abc"),
+                Token(WORD, ")"),
+            ]
+        );
+        "abc def".expect(
+            [
+                Token(WORD, "abc"),
+                Token(WORD, " "),
+                Token(WORD, "def"),
+            ]
+        );
+        
+        //macros
+        "$abc".expect(
+            [
+                Token(MACRO_START, "$"),
+                Token(WORD, "abc"),
+                Token(MACRO_END, ""),
+            ]
+        );
+        "$abc$def".expect(
+            [
+                Token(MACRO_START, "$"),
+                Token(WORD, "abc"),
+                Token(MACRO_END, ""),
+                Token(MACRO_START, "$"),
+                Token(WORD, "def"),
+                Token(MACRO_END, ""),
+            ]
+        );
+        "$(abc)$def".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(MACRO_END, ")"),
+                Token(MACRO_START, "$"),
+                Token(WORD, "def"),
+                Token(MACRO_END, ""),
+            ]
+        );
+        "$abc$(def)".expect(
+            [
+                Token(MACRO_START, "$"),
+                Token(WORD, "abc"),
+                Token(MACRO_END, ""),
+                Token(MACRO_START, "$("),
+                Token(WORD, "def"),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "$abc!".expect(
+            [
+                Token(MACRO_START, "$"),
+                Token(WORD, "abc"),
+                Token(MACRO_END, ""),
+                Token(WORD, "!"),
+            ]
+        );
+        "$(abc)".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "$(abc!)".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(WORD, "!"),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "$(abc )".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(WORD, " "),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "$(abc def)".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(WORD, " "),
+                Token(WORD, "def"),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "$(abc $def)".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(WORD, " "),
+                Token(MACRO_START, "$"),
+                Token(WORD, "def"),
+                Token(MACRO_END, ""),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "$(abc $(def ghi))".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(WORD, " "),
+                Token(MACRO_START, "$("),
+                Token(WORD, "def"),
+                Token(WORD, " "),
+                Token(WORD, "ghi"),
+                Token(MACRO_END, ")"),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        
+        //choices
+        "{abc|def}".expect(
+            [
+                Token(CHOICE_START, "{"),
+                Token(WORD, "abc"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(WORD, "def"),
+                Token(CHOICE_END, "}"),
+            ]
+        );
+        "{abc|}".expect(
+            [
+                Token(CHOICE_START, "{"),
+                Token(WORD, "abc"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(CHOICE_END, "}"),
+            ]
+        );
+        "{1|{2|3}|4}".expect(
+            [
+                Token(CHOICE_START, "{"),
+                Token(WORD, "1"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(CHOICE_START, "{"),
+                Token(WORD, "2"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(WORD, "3"),
+                Token(CHOICE_END, "}"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(WORD, "4"),
+                Token(CHOICE_END, "}"),
+            ]
+        );
+        
+        //nesting
+        "$(abc {def|ghi})".expect(
+            [
+                Token(MACRO_START, "$("),
+                Token(WORD, "abc"),
+                Token(WORD, " "),
+                Token(CHOICE_START, "{"),
+                Token(WORD, "def"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(WORD, "ghi"),
+                Token(CHOICE_END, "}"),
+                Token(MACRO_END, ")"),
+            ]
+        );
+        "{abc|$def}".expect(
+            [
+                Token(CHOICE_START, "{"),
+                Token(WORD, "abc"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(MACRO_START, "$"),
+                Token(WORD, "def"),
+                Token(MACRO_END, ""),
+                Token(CHOICE_END, "}"),
+            ]
+        );
+        "{abc|$(def ghi)}".expect(
+            [
+                Token(CHOICE_START, "{"),
+                Token(WORD, "abc"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(MACRO_START, "$("),
+                Token(WORD, "def"),
+                Token(WORD, " "),
+                Token(WORD, "ghi"),
+                Token(MACRO_END, ")"),
+                Token(CHOICE_END, "}"),
+            ]
+        );
+        
+        //expected failures
+        "\\".expect_exception;
+        "$".expect_exception;
+        "($)".expect_exception;
+        "{".expect_exception;
+        "{|".expect_exception;
+    }
+}
+
+private bool special(char_t chr)
+{
+    enum char_t[] specialCharacters = [
+        '\\', '$', '(', ')', '{', '|', '}',
+    ];
+    
+    foreach(special; specialCharacters)
+        if(chr == special)
+            return true;
+    
+    return false;
+}

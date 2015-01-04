@@ -7,6 +7,8 @@ private
     import libs.expression.lexer: Token, TokenType;
 }
 
+version(none):
+
 Particle[] parse(Token[] tokens)
 {
     reset(tokens);
