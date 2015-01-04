@@ -284,9 +284,7 @@ struct ExpressionLexer
 
 Token[] lex(StringType)(StringType source)
 {
-    auto lexer = ExpressionLexer(source.to!string_t);
-    
-    return lexer.tokens;
+    return ExpressionLexer(source.to!string_t).tokens;
 }
 
 //unittest helpers
