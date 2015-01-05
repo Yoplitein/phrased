@@ -7,8 +7,8 @@ private
 {
     import std.string: format;
     
-    import phrased: PhrasedException;
-    import phrased.expression: SequenceNode;
+    import phrased: PhrasedException, PhrasedRange;
+    import phrased.expression: Node, SequenceNode;
     
     MacroFunction[string] macros;
     string currentMacro;
@@ -17,7 +17,12 @@ private
 /++
     The signature of a function implementing a macro.
 +/
-alias MacroFunction = string delegate(SequenceNode arguments);
+alias MacroFunction = string delegate(ArgumentRange arguments);
+
+/++
+    An input range passed to macros containing their arguments.
++/
+alias ArgumentRange = PhrasedRange!Node;
 
 /++
     Register a macro.
@@ -61,8 +66,9 @@ string resolve_macro(string name, SequenceNode arguments)
     {
         currentMacro = name;
         scope(exit) currentMacro = "UNDEFINED";
+        auto args = ArgumentRange(arguments.children.data);
         
-        return macros[name](arguments);
+        return macros[name](args);
     }
     
     if(arguments.empty)

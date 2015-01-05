@@ -7,8 +7,7 @@ private
 {
     import std.conv: to;
     
-    import phrased: PhrasedException;
-    import phrased.expression: ExpressionRange;
+    import phrased: PhrasedException, PhrasedRange;
 }
 
 /++
@@ -62,7 +61,7 @@ struct ExpressionLexer
 {
     import std.uni: isWhite;
     
-    private ExpressionRange!char_t data;
+    private PhrasedRange!char_t data;
     private int macroLevel;
     private int choiceLevel;
     Token[] result; ///The resulting sequence of tokens from a successful lex
@@ -74,7 +73,7 @@ struct ExpressionLexer
     +/
     this(string_t expression)
     {
-        data = ExpressionRange!char_t(expression.dup);
+        data = PhrasedRange!char_t(expression.dup);
         
         while(!data.empty)
             lex;

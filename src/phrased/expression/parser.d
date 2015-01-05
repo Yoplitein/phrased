@@ -6,8 +6,7 @@ module phrased.expression.parser;
 
 private
 {
-    import phrased: PhrasedException;
-    import phrased.expression: ExpressionRange;
+    import phrased: PhrasedException, PhrasedRange;
     import phrased.expression.lexer: Token;
 }
 
@@ -35,7 +34,6 @@ interface Node
 
 /++
     A node containing a sequence of subnodes, referred to as children.
-    Implements the interfaces of an input and output range.
 +/
 class SequenceNode: Node
 {
@@ -54,14 +52,6 @@ class SequenceNode: Node
     }
     
     /++
-        The remaining data in the range.
-    +/
-    Node[] data()
-    {
-        return children.data[index .. $];
-    }
-    
-    /++
         Add a child node to the end of the list of children.
     +/
     void put(Node node)
@@ -70,28 +60,11 @@ class SequenceNode: Node
     }
     
     /++
-        Input range interface.
-    +/
-    void popFront()
-    {
-        if(!empty)
-            index++;
-    }
-    
-    Node front()
-    {
-        if(index >= length)
-            throw new ParserException("Attempting to get the front of an empty range");
-        
-        return data[index];
-    }
-    
-    /++
         Returns the number of child nodes.
     +/
     size_t length()
     {
-        return data.length;
+        return children.data.length;
     }
     
     /++
@@ -99,7 +72,7 @@ class SequenceNode: Node
     +/
     bool empty()
     {
-        return length == 0;
+        return children.data.length == 0;
     }
     
     ///See $(SYMBOL_LINK Node.resolve).
@@ -204,7 +177,7 @@ struct ExpressionParser
     
     import phrased.expression.lexer: TokenType;
     
-    private ExpressionRange!Token tokens;
+    private PhrasedRange!Token tokens;
     SequenceNode result; ///The resulting SequenceNode from a successful parse
     
     /++
@@ -212,7 +185,7 @@ struct ExpressionParser
     +/
     this(Token[] tokens)
     {
-        this.tokens = ExpressionRange!Token(tokens);
+        this.tokens = PhrasedRange!Token(tokens);
         result = new SequenceNode;
         
         while(!this.tokens.empty)
