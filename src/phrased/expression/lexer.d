@@ -429,12 +429,9 @@ unittest
         );
         
         //choices
-        "{abc|def}".expect(
+        "{}".expect(
             [
                 Token(CHOICE_START, "{"),
-                Token(WORD, "abc"),
-                Token(CHOICE_SEPARATOR, "|"),
-                Token(WORD, "def"),
                 Token(CHOICE_END, "}"),
             ]
         );
@@ -443,6 +440,15 @@ unittest
                 Token(CHOICE_START, "{"),
                 Token(WORD, "abc"),
                 Token(CHOICE_SEPARATOR, "|"),
+                Token(CHOICE_END, "}"),
+            ]
+        );
+        "{abc|def}".expect(
+            [
+                Token(CHOICE_START, "{"),
+                Token(WORD, "abc"),
+                Token(CHOICE_SEPARATOR, "|"),
+                Token(WORD, "def"),
                 Token(CHOICE_END, "}"),
             ]
         );
@@ -462,7 +468,7 @@ unittest
             ]
         );
         
-        //nesting
+        //nesting of macros and choices
         "$(abc {def|ghi})".expect(
             [
                 Token(MACRO_START, "$("),

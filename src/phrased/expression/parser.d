@@ -34,13 +34,15 @@ interface Node
 }
 
 /++
-    A node containing a sequence of subnodes.
+    A node containing a sequence of subnodes, referred to as children.
+    Implements the interfaces of an input and output range.
 +/
 class SequenceNode: Node
 {
     import std.array: Appender, appender;
     
-    Appender!(Node[]) children; ///The subnodes within this node
+    private size_t index;
+    Appender!(Node[]) children; ///The children within this node
     
     ///
     this() {}
@@ -52,11 +54,52 @@ class SequenceNode: Node
     }
     
     /++
-        Add a child node to the end of the list of subnodes.
+        The remaining data in the range.
     +/
-    void add(Node node)
+    Node[] data()
+    {
+        return children.data[index .. $];
+    }
+    
+    /++
+        Add a child node to the end of the list of children.
+    +/
+    void put(Node node)
     {
         children.put(node);
+    }
+    
+    /++
+        Input range interface.
+    +/
+    void popFront()
+    {
+        if(!empty)
+            index++;
+    }
+    
+    Node front()
+    {
+        if(index >= length)
+            throw new ParserException("Attempting to get the front of an empty range");
+        
+        return data[index];
+    }
+    
+    /++
+        Returns the number of child nodes.
+    +/
+    size_t length()
+    {
+        return data.length;
+    }
+    
+    /++
+        Returns whether there are any children in this node.
+    +/
+    bool empty()
+    {
+        return length == 0;
     }
     
     ///See $(SYMBOL_LINK Node.resolve).
@@ -114,10 +157,9 @@ class MacroNode: Node
     ///See $(SYMBOL_LINK Node.resolve).
     override string resolve()
     {
-        import std.string: format;
+        import phrased.macro_: resolve_macro;
         
-        //TODO: macro system
-        return "<macro \"%s\" with arguments \"%s\">".format(name.resolve, arguments.resolve);
+        return resolve_macro(name.resolve, arguments);
     }
 }
 
@@ -126,6 +168,7 @@ class MacroNode: Node
     
     Inherits from $(SYMBOL_LINK SequenceNode) as the functionality is mostly the same,
     except a single child node is chosen while resolving, instead of concatenating them all.
+    The empty string is resolved if there are no children.
 +/
 class ChoiceNode: SequenceNode
 {
@@ -143,7 +186,10 @@ class ChoiceNode: SequenceNode
     {
         import std.random: uniform;
         
-        return children.data[uniform(0, $)].resolve;
+        if(empty)
+            return "";
+        else
+            return children.data[uniform(0, $)].resolve;
     }
 }
 
@@ -170,7 +216,7 @@ struct ExpressionParser
         result = new SequenceNode;
         
         while(!this.tokens.empty)
-            result.add(parse);
+            result.put(parse);
     }
     
     private void ensure_nonempty(string message)
@@ -212,19 +258,19 @@ struct ExpressionParser
         {
             if(tokens.front.type == TokenType.CHOICE_SEPARATOR)
             {
-                result.add(currentPart);
+                result.put(currentPart);
                 tokens.popFront;
                 
                 currentPart = new SequenceNode;
             }
             else
-                currentPart.add(parse);
+                currentPart.put(parse);
         }
         
         if(tokens.empty && tokens.previous.type != TokenType.CHOICE_END)
             throw new ParserException("Unterminated choice");
         
-        result.add(currentPart);
+        result.put(currentPart);
         tokens.popFront;
         
         return result;
@@ -259,7 +305,7 @@ struct ExpressionParser
                 tokens.popFront;
                 
                 while(!tokens.empty && tokens.front.type != TokenType.MACRO_END)
-                    result.arguments.add(parse);
+                    result.arguments.put(parse);
                 
                 if(tokens.empty && tokens.previous.type != TokenType.MACRO_END)
                     throw new ParserException("Unterminated macro");
