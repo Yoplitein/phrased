@@ -362,6 +362,15 @@ unittest
                 Token(MACRO_END, ")"),
             ]
         );
+        "abc$(def)ghi".expect(
+            [
+                Token(WORD, "abc"),
+                Token(MACRO_START, "$("),
+                Token(WORD, "def"),
+                Token(MACRO_END, ")"),
+                Token(WORD, "ghi"),
+            ]
+        );
         "$abc!".expect(
             [
                 Token(MACRO_START, "$"),
@@ -432,6 +441,14 @@ unittest
             [
                 Token(CHOICE_START, "{"),
                 Token(CHOICE_END, "}"),
+            ]
+        );
+        "abc{}def".expect(
+            [
+                Token(WORD, "abc"),
+                Token(CHOICE_START, "{"),
+                Token(CHOICE_END, "}"),
+                Token(WORD, "def"),
             ]
         );
         "{abc|}".expect(

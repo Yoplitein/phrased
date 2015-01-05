@@ -271,6 +271,9 @@ struct ExpressionParser
             case "$(":
                 import std.uni: isWhite;
                 
+                if(tokens.front.type == TokenType.MACRO_END)
+                    break;
+                
                 foreach(chr; tokens.front.value)
                     if(!chr.isWhite)
                         throw new ParserException("Invalid macro: name followed by invalid characters");
