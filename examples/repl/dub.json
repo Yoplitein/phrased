@@ -1,0 +1,8 @@
+{
+	"name": "repl",
+	"dependencies": {
+        "phrased": {"path": "../.."},
+        "linenoise": ">=0.0.0",
+        "colorize": ">=1.0.5",
+	},
+}

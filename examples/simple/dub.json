@@ -1,0 +1,6 @@
+{
+	"name": "simple",
+	"dependencies": {
+        "phrased": {"path": "../.."},
+	},
+}

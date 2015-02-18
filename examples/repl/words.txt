@@ -1,0 +1,32 @@
+noun chair leg
+noun cliff
+noun trout
+noun fork
+noun longsword
+noun terminal
+noun cookie
+noun grill
+adjective large
+adjective glowing-hot
+adjective rusty
+adjective moldy
+adjective red
+adjective old
+adjective brand spanking new
+adjective stupid
+adverb dangerously
+adverb cutely
+adverb boastfully
+adverb covertly
+adverb fatally
+adverb thankfully
+adverb justly
+adverb perpetually
+verb inserts
+verb cooks
+verb informs
+verb uses
+verb augments
+verb purchases
+verb hires
+verb converts

@@ -9,12 +9,13 @@ module phrased.macro_;
 private
 {
     import std.string: format;
+    import std.random: uniform;
     
     import phrased: PhrasedException, PhrasedRange;
     import phrased.expression: Node, SequenceNode;
     
     MacroFunction[string] macros;
-    string currentMacro;
+    string currentMacro = "NONE";
 }
 
 /++
@@ -57,11 +58,19 @@ void deregister_macro(string name)
 }
 
 /++
+    Returns a list of the names of registered macros.
++/
+string[] registered_macros()
+{
+    return macros.keys;
+}
+
+/++
     Resolve a macro into a string by either running a registered macro function,
     or looking it up as a word in the $(LINK2 phrased.dictionary.html#defaultDictionary, default dictionary).
     
     Throws:
-        PhrasedException if the macro is to be resolved as a word and the default dictionary is null
+        PhrasedException if the default dictionary is null
 +/
 string resolve_macro(string name, SequenceNode arguments)
 {
@@ -69,8 +78,9 @@ string resolve_macro(string name, SequenceNode arguments)
     
     if(name in macros)
     {
+        string lastMacro = currentMacro;
         currentMacro = name;
-        scope(exit) currentMacro = "UNDEFINED";
+        scope(exit) currentMacro = lastMacro;
         auto args = ArgumentRange(arguments.children.data);
         
         return macros[name](args);
@@ -105,6 +115,17 @@ string resolve(ArgumentRange arguments)
     return new SequenceNode(arguments.array).resolve;
 }
 
+unittest
+{
+    import phrased.expression: WordNode;
+    
+    auto args = ArgumentRange([new WordNode("abc"), new WordNode("def")]);
+    
+    assert(args.resolve == "abcdef");
+    args.popFront;
+    assert(args.resolve == "def");
+}
+
 //default macros
 
 /++
@@ -123,8 +144,6 @@ string resolve(ArgumentRange arguments)
 +/
 string macro_optional(ArgumentRange arguments)
 {
-    import std.random: uniform;
-    
     if(uniform!"[]"(0, 1))
         return arguments.resolve;
     else
@@ -254,6 +273,17 @@ string macro_tomorrow(ArgumentRange arguments)
     return Clock.currTime.roll!"days"(1).dayOfWeek.name;
 }
 
+/++
+    A macro that resolves to the name of a random day of the week.
++/
+string macro_day(ArgumentRange arguments)
+{
+    if(!arguments.empty)
+        return macro_error("no arguments expected");
+    
+    return Clock.currTime.roll!"days"(uniform!"[]"(0, 6)).dayOfWeek.name;
+}
+
 version(PHRASED_NO_DEFAULT_MACROS) {}
 else
 {
@@ -265,5 +295,6 @@ else
         register_macro("lower", &macro_lower);
         register_macro("today", &macro_today);
         register_macro("tomorrow", &macro_tomorrow);
+        register_macro("day", &macro_day);
     }
 }

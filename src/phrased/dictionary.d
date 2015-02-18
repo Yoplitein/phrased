@@ -33,7 +33,7 @@ interface Dictionary
 +/
 class NullDictionary: Dictionary
 {
-    enum errorMessage = `<error: looked up word of type "%s" from a NullDictionary>`;
+    enum errorMessage = `<error: looked up word of category "%s" from a NullDictionary>`;
     
     ///
     this() {}
@@ -55,7 +55,7 @@ class NullDictionary: Dictionary
 +/
 class RuntimeDictionary: Dictionary
 {
-    enum errorMessage = `<error: unknown category "%s">`;
+    enum errorMessage = `<error: unknown word category "%s">`;
     
     Dictionary fallback; ///The dictionary that is used instead when an unknown category is looked up
     string[][string] definitions;
@@ -78,9 +78,6 @@ class RuntimeDictionary: Dictionary
     
     void add(string category, string value)
     {
-        if(category !in definitions)
-            definitions[category] = [];
-        
         definitions[category] ~= value;
     }
     
@@ -106,15 +103,12 @@ class RuntimeDictionary: Dictionary
     {
         import std.random: uniform;
         
-        if(category !in definitions)
+        auto list = category in definitions;
+        
+        if(list is null || list.length == 0)
             return fallback.lookup(category);
         
-        auto list = definitions[category];
-        
-        if(list.length == 0)
-            return errorMessage.format(category);
-        
-        return list[uniform(0, $)];
+        return (*list)[uniform(0, $)];
     }
 }
 
