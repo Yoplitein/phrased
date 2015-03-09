@@ -1,7 +1,5 @@
 #phrased
-Phrased is a library for evaluating [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template).
-
-<!-- TODO: flesh this out a bit more -->
+Phrased is a library implementing a markup language for [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template).
 
 ##Template syntax
 The syntax is composed of three basic elements:
@@ -11,17 +9,21 @@ The syntax is composed of three basic elements:
 * Choices
 
 ###Words
-A word is a sequence of chracters that are either
+A word is a sequence of chracters that are not
 
-* not whitespace, as defined by Unicode
-* not an unescaped character used to delimit macro or choice expressions
+* whitespace, as defined by Unicode
+    * whitespace is preserved, however (represented as separate words in the parse tree)
+* a character used to delimit macro or choice expressions, unless they are escaped with a backslash (`\`)
 
 ###Macros
 A macro is an expression of the form `$macroName` or  `$(macroName arg1 arg2 ...)`.
 
-Macros are either a D function, or a category of word resolved from a database.
-Function macros can (theoretically) perform any kind of processing on the arguments, returning the output to the parser for reevaluation, or modifying the word database, or perhaps other functions still.
-Variable macros 
+Macros are either resolved as the result of calls to user-supplied functions, or as strings from a dictionary.
+
+Macros implemented as functions can (theoretically) perform any kind of processing on the arguments,
+running them through another lex-parse-resolve sequence, modifying the dictionary (if possible), or perhaps other operations still.
+
+When a macro does not exist as a function, the macro resolver falls back to a dictionary object, looking up the macro name as a category of word.
 
 ###Choices
 A choice is an expression of the form `{first choice|second choice|...}`.
@@ -29,7 +31,7 @@ A choice is an expression of the form `{first choice|second choice|...}`.
 When building a sentence one of the options, delimited by the pipe (`|`), appears in the final output.
 
 ###Nesting
-Macros can be nested within choices, and likewise for choices within macros.
+Macros and choices can be nested within themselves and each other as deeply as desired, assuming adequate stack space.
 
 ###Examples and potential results
 ```
@@ -43,3 +45,12 @@ She punches huge baskets by the vengeful lemonade stand.
 
 * Gadget touches goppend with a flashlight, slowly.
 ```
+
+```
+I have \${5|10|15}.
+
+I have $15.
+```
+
+##Usage
+See the [examples](examples).
