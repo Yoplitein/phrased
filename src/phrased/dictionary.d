@@ -10,9 +10,14 @@ private
 
 /++
     The default dictionary used by the macro system.
-    Must be instantiated in user code.
+    Initialized by default to an instance of $(SYMBOL_LINK NullDictionary).
 +/
 Dictionary defaultDictionary;
+
+static this()
+{
+    defaultDictionary = new NullDictionary;
+}
 
 /++
     A dictionary is an object that can return words from certain categories.
