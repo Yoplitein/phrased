@@ -107,12 +107,12 @@ class WordNode: Node
 }
 
 /++
-    A node representing a macro expression.
+    A node representing a variable expression.
 +/
-class MacroNode: Node
+class VariableNode: Node
 {
-    WordNode name; ///The name of the macro
-    SequenceNode arguments; ///The arguments to the macro
+    WordNode name; ///The name of the variable
+    SequenceNode arguments; ///The arguments to the variable
     
     ///
     this()
@@ -206,8 +206,8 @@ struct ExpressionParser
                 return parse_word;
             case CHOICE_START:
                 return parse_choice;
-            case MACRO_START:
-                return parse_macro;
+            case VARIABLE_START:
+                return parse_variable;
             default:
                 throw new ParserException("Unexpected token: " ~ tokens.front.to!string);
         }
@@ -249,46 +249,46 @@ struct ExpressionParser
         return result;
     }
     
-    private Node parse_macro()
+    private Node parse_variable()
     {
-        auto result = new MacroNode;
+        auto result = new VariableNode;
         auto startToken = tokens.front;
         
         tokens.popFront;
-        ensure_nonempty("Unexpected end of macro");
+        ensure_nonempty("Unexpected end of variable");
         
         result.name = cast(WordNode)parse_word;
         
-        ensure_nonempty("Unexpected end of macro");
+        ensure_nonempty("Unexpected end of variable");
         
         switch(startToken.value)
         {
             case "$":
-                if(tokens.front.type != TokenType.MACRO_END)
-                    throw new ParserException("Unterminated macro");
+                if(tokens.front.type != TokenType.VARIABLE_END)
+                    throw new ParserException("Unterminated variable");
                 
                 break;
             case "$(":
                 import std.uni: isWhite;
                 
-                if(tokens.front.type == TokenType.MACRO_END)
+                if(tokens.front.type == TokenType.VARIABLE_END)
                     break;
                 
                 foreach(chr; tokens.front.value)
                     if(!chr.isWhite)
-                        throw new ParserException("Invalid macro: name followed by invalid characters");
+                        throw new ParserException("Invalid variable: name followed by invalid characters");
                 
                 tokens.popFront;
                 
-                while(!tokens.empty && tokens.front.type != TokenType.MACRO_END)
+                while(!tokens.empty && tokens.front.type != TokenType.VARIABLE_END)
                     result.arguments.put(parse);
                 
-                if(tokens.empty && tokens.previous.type != TokenType.MACRO_END)
-                    throw new ParserException("Unterminated macro");
+                if(tokens.empty && tokens.previous.type != TokenType.VARIABLE_END)
+                    throw new ParserException("Unterminated variable");
                 
                 break;
             default:
-                throw new ParserException("Internal parser error: unknown macro prefix");
+                throw new ParserException("Internal parser error: unknown variable prefix");
         }
         
         tokens.popFront;

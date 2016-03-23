@@ -27,8 +27,8 @@ enum TokenType
     CHOICE_START, ///The start of a choice expression ($(TT {))
     CHOICE_END, ///The end of a choice expression ($(TT }))
     CHOICE_SEPARATOR, ///The separator between elements of a choice expression ($(TT |))
-    MACRO_START, ///The start of a macro expression ($(TT $(DOLLAR)) for simple ones and $(TT $(DOLLAR)$(LPAREN)) for complex ones)
-    MACRO_END, ///The end of a macro expression (empty for simple ones, and $(TT $(RPAREN)) for complex ones)
+    VARIABLE_START, ///The start of a variable expression ($(TT $(DOLLAR)) for simple ones and $(TT $(DOLLAR)$(LPAREN)) for complex ones)
+    VARIABLE_END, ///The end of a variable expression (empty for simple ones, and $(TT $(RPAREN)) for complex ones)
 }
 
 /++
@@ -62,7 +62,7 @@ struct ExpressionLexer
     import std.uni: isWhite;
     
     private PhrasedRange!char_t data;
-    private int macroLevel;
+    private int variableLevel;
     private int choiceLevel;
     Token[] result; ///The resulting sequence of tokens from a successful lex
     
@@ -97,13 +97,13 @@ struct ExpressionLexer
             case '\\':
                 return lex_escape;
             case '$':
-                return lex_macro;
+                return lex_variable;
             case '{':
                 return lex_choice;
             case '(':
                 return lex_symbol;
             case ')':
-                if(macroLevel == 0)
+                if(variableLevel == 0)
                     return lex_symbol;
                 
                 break;
@@ -129,44 +129,44 @@ struct ExpressionLexer
         data.popFront;
     }
     
-    private void lex_macro()
+    private void lex_variable()
     {
-        macroLevel++;
+        variableLevel++;
         
         data.popFront;
-        ensure_nonempty("Unterminated macro");
+        ensure_nonempty("Unterminated variable");
         
         if(data.front == '(')
         {
             data.popFront;
-            ensure_nonempty("Unterminated macro");
-            add(TokenType.MACRO_START, "$(");
+            ensure_nonempty("Unterminated variable");
+            add(TokenType.VARIABLE_START, "$(");
             
             lex_word(true);
             
             while(!data.empty && data.front != ')')
                 lex;
             
-            if(result[$ - 2].type == TokenType.MACRO_START && result[$ - 1].value == "")
-                throw new LexerException("Malformed macro");
+            if(result[$ - 2].type == TokenType.VARIABLE_START && result[$ - 1].value == "")
+                throw new LexerException("Malformed variable");
             
-            ensure_nonempty("Unterminated macro");
+            ensure_nonempty("Unterminated variable");
             data.popFront;
             
-            add(TokenType.MACRO_END, ")");
+            add(TokenType.VARIABLE_END, ")");
         }
         else
         {
-            add(TokenType.MACRO_START, "$");
+            add(TokenType.VARIABLE_START, "$");
             lex_word(true);
             
             if(result[$ - 1].value == "")
-                throw new LexerException("Malformed macro");
+                throw new LexerException("Malformed variable");
             
-            add(TokenType.MACRO_END, "");
+            add(TokenType.VARIABLE_END, "");
         }
         
-        macroLevel--;
+        variableLevel--;
     }
     
     private void lex_choice()
@@ -324,115 +324,115 @@ unittest
             ]
         );
         
-        //macros
+        //variables
         "$abc".expect(
             [
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "abc"),
-                Token(MACRO_END, ""),
+                Token(VARIABLE_END, ""),
             ]
         );
         "$abc$def".expect(
             [
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "abc"),
-                Token(MACRO_END, ""),
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_END, ""),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "def"),
-                Token(MACRO_END, ""),
+                Token(VARIABLE_END, ""),
             ]
         );
         "$(abc)$def".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
-                Token(MACRO_END, ")"),
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_END, ")"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "def"),
-                Token(MACRO_END, ""),
+                Token(VARIABLE_END, ""),
             ]
         );
         "$abc$(def)".expect(
             [
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "abc"),
-                Token(MACRO_END, ""),
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_END, ""),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "def"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "abc$(def)ghi".expect(
             [
                 Token(WORD, "abc"),
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "def"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
                 Token(WORD, "ghi"),
             ]
         );
         "$abc!".expect(
             [
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "abc"),
-                Token(MACRO_END, ""),
+                Token(VARIABLE_END, ""),
                 Token(WORD, "!"),
             ]
         );
         "$(abc)".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "$(abc!)".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
                 Token(WORD, "!"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "$(abc )".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
                 Token(WORD, " "),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "$(abc def)".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
                 Token(WORD, " "),
                 Token(WORD, "def"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "$(abc $def)".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
                 Token(WORD, " "),
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "def"),
-                Token(MACRO_END, ""),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ""),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "$(abc $(def ghi))".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
                 Token(WORD, " "),
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "def"),
                 Token(WORD, " "),
                 Token(WORD, "ghi"),
-                Token(MACRO_END, ")"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         
@@ -484,10 +484,10 @@ unittest
             ]
         );
         
-        //nesting of macros and choices
+        //nesting of variables and choices
         "$(abc {def|ghi})".expect(
             [
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "abc"),
                 Token(WORD, " "),
                 Token(CHOICE_START, "{"),
@@ -495,7 +495,7 @@ unittest
                 Token(CHOICE_SEPARATOR, "|"),
                 Token(WORD, "ghi"),
                 Token(CHOICE_END, "}"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
             ]
         );
         "{abc|$def}".expect(
@@ -503,9 +503,9 @@ unittest
                 Token(CHOICE_START, "{"),
                 Token(WORD, "abc"),
                 Token(CHOICE_SEPARATOR, "|"),
-                Token(MACRO_START, "$"),
+                Token(VARIABLE_START, "$"),
                 Token(WORD, "def"),
-                Token(MACRO_END, ""),
+                Token(VARIABLE_END, ""),
                 Token(CHOICE_END, "}"),
             ]
         );
@@ -514,11 +514,11 @@ unittest
                 Token(CHOICE_START, "{"),
                 Token(WORD, "abc"),
                 Token(CHOICE_SEPARATOR, "|"),
-                Token(MACRO_START, "$("),
+                Token(VARIABLE_START, "$("),
                 Token(WORD, "def"),
                 Token(WORD, " "),
                 Token(WORD, "ghi"),
-                Token(MACRO_END, ")"),
+                Token(VARIABLE_END, ")"),
                 Token(CHOICE_END, "}"),
             ]
         );
