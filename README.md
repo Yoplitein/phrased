@@ -5,7 +5,7 @@ Phrased is a library implementing a markup language for [phrasal templates](http
 The syntax is composed of three basic elements:
 
 * Words
-* Macros
+* Variables
 * Choices
 
 ###Words
@@ -13,17 +13,17 @@ A word is a sequence of chracters that are not
 
 * whitespace, as defined by Unicode
     * whitespace is preserved, however (represented as separate words in the parse tree)
-* a character used to delimit macro or choice expressions, unless they are escaped with a backslash (`\`)
+* a character used to delimit variable or choice expressions, unless they are escaped with a backslash (`\`)
 
-###Macros
-A macro is an expression of the form `$macroName` or  `$(macroName arg1 arg2 ...)`.
+###Variables
+A variable is an expression of the form `$variableName` or  `$(variableName arg1 arg2 ...)`.
 
-Macros are either resolved as the result of calls to user-supplied functions, or as strings from a dictionary.
+Variables are either resolved as the result of calls to user-supplied functions, or as strings from a dictionary.
 
-Macros implemented as functions can (theoretically) perform any kind of processing on the arguments,
+Variables implemented as functions can (theoretically) perform any kind of processing on the arguments,
 running them through another lex-parse-resolve sequence, modifying the dictionary (if possible), or perhaps other operations still.
 
-When a macro does not exist as a function, the macro resolver falls back to a dictionary object, looking up the macro name as a category of word.
+When a variable does not exist as a function, the variable resolver falls back to a dictionary object, looking up the variable name as a category of word.
 
 ###Choices
 A choice is an expression of the form `{first choice|second choice|...}`.
@@ -31,7 +31,7 @@ A choice is an expression of the form `{first choice|second choice|...}`.
 When building a sentence one of the options, delimited by the pipe (`|`), appears in the final output.
 
 ###Nesting
-Macros and choices can be nested within themselves and each other as deeply as desired, assuming adequate stack space.
+Variables and choices can be nested within themselves and each other as deeply as desired, assuming adequate stack space.
 
 ###Examples and potential results
 ```
