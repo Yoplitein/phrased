@@ -532,9 +532,9 @@ unittest
     }
 }
 
-private bool special(char_t chr)
+private bool special(char_t chr) pure
 {
-    enum char_t[] specialCharacters = [
+    static immutable char_t[] specialCharacters = [
         '\\', '$', '(', ')', '{', '|', '}',
     ];
     
