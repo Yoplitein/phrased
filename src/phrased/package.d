@@ -5,7 +5,7 @@ module phrased;
 
 public import phrased.dictionary;
 public import phrased.expression;
-public import phrased.macro_;
+public import phrased.variable;
 
 /++
     Base class for any exceptions thrown by the library.

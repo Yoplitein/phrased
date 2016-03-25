@@ -1,10 +1,10 @@
 /++
-    Interface for managing expression macros.
-    Also includes some default, general purpose macros.
+    Interface for managing builtin variables.
+    Also includes some default, general purpose builtins.
     
-    Registration of the default macros can be disabled by passing version PHRASED_NO_DEFAULT_MACROS.
+    Registration of the default builtins can be disabled by passing version PHRASED_NO_DEFAULT_BUILTINS.
 +/
-module phrased.macro_;
+module phrased.variable;
 
 private
 {
@@ -14,95 +14,95 @@ private
     import phrased: PhrasedException, PhrasedRange;
     import phrased.expression: Node, SequenceNode;
     
-    MacroFunction[string] macros;
-    string currentMacro = "NONE";
+    BuiltinFunction[string] builtins;
+    string currentBuiltin = "NONE";
 }
 
 /++
-    The signature of a function implementing a macro.
+    The signature of a builtin.
 +/
-alias MacroFunction = string delegate(ArgumentRange arguments);
+alias BuiltinFunction = string delegate(ArgumentRange arguments);
 
 /++
-    An input range passed to macros containing their arguments.
+    An input range passed to builtins containing their arguments.
 +/
 alias ArgumentRange = PhrasedRange!Node;
 
 /++
-    Register a macro.
+    Register a builtin.
     
     Params:
-        name = name of the macro, as used in expressions
-        macroFunc = function to call when this macro is invoked in an expression
-        overwrite = whether to overwrite preexisting macros
+        name = name of the builtin, as used in expressions
+        builtinFunc = function to call when this builtin is invoked in an expression
+        overwrite = whether to overwrite preexisting builtins
     
     Throws:
-        $(LINK2 phrased.package.html#PhrasedException, PhrasedException) if another macro exists by this name, and overwrite is false
+        $(LINK2 phrased.package.html#PhrasedException, PhrasedException) if another builtin exists by this name, and overwrite is false
 +/
-void register_macro(FunctionType)(string name, FunctionType macroFunc, bool overwrite = false)
+void register_builtin(FunctionType)(string name, FunctionType builtinFunc, bool overwrite = false)
 {
     import std.functional: toDelegate;
     
-    if(name in macros && !overwrite)
-        throw new PhrasedException("A macro by the name %s already exists".format(name));
+    if(name in builtins && !overwrite)
+        throw new PhrasedException("A builtin by the name %s already exists".format(name));
     
-    macros[name] = macroFunc.toDelegate;
+    builtins[name] = builtinFunc.toDelegate;
 }
 
 /++
-    Deregister a macro, if it exists.
+    Deregister a builtin, if it exists.
 +/
-void deregister_macro(string name)
+void deregister_builtin(string name)
 {
-    macros.remove(name);
+    builtins.remove(name);
 }
 
 /++
-    Returns a list of the names of registered macros.
+    Returns a list of the names of registered builtins.
 +/
-string[] registered_macros()
+string[] registered_builtins()
 {
-    return macros.keys;
+    return builtins.keys;
 }
 
 /++
-    Resolve a macro into a string by either running a registered macro function,
+    Resolve a variable into a string by either running a registered builtin function,
     or looking it up as a word in the $(LINK2 phrased.dictionary.html#defaultDictionary, default dictionary).
     
     Throws:
         PhrasedException if the default dictionary is null
 +/
-string resolve_macro(string name, SequenceNode arguments)
+string resolve_variable(string name, SequenceNode arguments)
 {
     import phrased.dictionary: defaultDictionary;
     
-    if(name in macros)
+    if(name in builtins)
     {
-        string lastMacro = currentMacro;
-        currentMacro = name;
-        scope(exit) currentMacro = lastMacro;
+        string lastBuiltin = currentBuiltin;
+        currentBuiltin = name;
+        scope(exit) currentBuiltin = lastBuiltin;
         auto args = ArgumentRange(arguments.children.data);
         
-        return macros[name](args);
+        return builtins[name](args);
     }
     
     if(arguments.empty)
     {
         if(defaultDictionary is null)
-            throw new PhrasedException(`Attempted to resolve macro "%s" as a word, but the default dictionary is null`.format(name));
+            throw new PhrasedException(`Attempted to resolve variable "%s" as a word, but the default dictionary is null`.format(name));
         
         return defaultDictionary.lookup(name);
     }
     else
-        return `<error: unknown macro "%s">`.format(name);
+        return `<error: unknown builtin "%s">`.format(name);
 }
 
 /++
-    Helper function for macros that resolve to an error.
+    Helper function for builtins that resolve to an error.
 +/
-string macro_error(string msg)
+string builtin_error(string msg)
 {
-    return `<error invoking macro "%s": %s>`.format(currentMacro, msg);
+    return `<error invoking builtin "%s": %s>`.format(currentBuiltin, msg);
 }
 
 /++
@@ -126,10 +126,10 @@ unittest
     assert(args.resolve == "def");
 }
 
-//default macros
+//default builtins
 
 /++
-    A macro implementing an optional expression. Nicer syntax for $(TT {expression|}).
+    A builtin implementing an optional expression. Nicer syntax for $(TT {expression|}).
     
     Examples:
         ---
@@ -142,7 +142,7 @@ unittest
         I have far too many cats.
         ---
 +/
-string macro_optional(ArgumentRange arguments)
+string builtin_optional(ArgumentRange arguments)
 {
     if(uniform!"[]"(0, 1))
         return arguments.resolve;
@@ -151,7 +151,7 @@ string macro_optional(ArgumentRange arguments)
 }
 
 /++
-    A macro that uses the appropriate article for the first word in the arguments.
+    A builtin that uses the appropriate article for the first word in the arguments.
     
     Examples:
         ---
@@ -162,10 +162,10 @@ string macro_optional(ArgumentRange arguments)
         a bear, an aardvark
         ---
 +/
-string macro_article(ArgumentRange arguments)
+string builtin_article(ArgumentRange arguments)
 {
     if(arguments.length == 0)
-        return macro_error("need at least one argument");
+        return builtin_error("need at least one argument");
     
     auto joined = arguments.resolve;
     
@@ -188,7 +188,7 @@ string macro_article(ArgumentRange arguments)
 }
 
 /++
-    A macro that converts its arguments to uppercase.
+    A builtin that converts its arguments to uppercase.
     
     Examples:
         ---
@@ -199,7 +199,7 @@ string macro_article(ArgumentRange arguments)
         HELLO, WORLD!
         ---
 +/
-string macro_upper(ArgumentRange arguments)
+string builtin_upper(ArgumentRange arguments)
 {
     import std.uni: toUpper;
     
@@ -207,7 +207,7 @@ string macro_upper(ArgumentRange arguments)
 }
 
 /++
-    A macro that converts its arguments to lowercase.
+    A builtin that converts its arguments to lowercase.
     
     Examples:
         ---
@@ -218,7 +218,7 @@ string macro_upper(ArgumentRange arguments)
         why am i shouting
         ---
 +/
-string macro_lower(ArgumentRange arguments)
+string builtin_lower(ArgumentRange arguments)
 {
     import std.uni: toLower;
     
@@ -252,49 +252,49 @@ private
 }
 
 /++
-    A macro that resolves to the name of the current day.
+    A builtin that resolves to the name of the current day.
 +/
-string macro_today(ArgumentRange arguments)
+string builtin_today(ArgumentRange arguments)
 {
     if(!arguments.empty)
-        return macro_error("no arguments expected");
+        return builtin_error("no arguments expected");
     
     return Clock.currTime.dayOfWeek.name;
 }
 
 /++
-    A macro that resolves to the name of the day tomorrow.
+    A builtin that resolves to the name of the day tomorrow.
 +/
-string macro_tomorrow(ArgumentRange arguments)
+string builtin_tomorrow(ArgumentRange arguments)
 {
     if(!arguments.empty)
-        return macro_error("no arguments expected");
+        return builtin_error("no arguments expected");
     
     return Clock.currTime.roll!"days"(1).dayOfWeek.name;
 }
 
 /++
-    A macro that resolves to the name of a random day of the week.
+    A builtin that resolves to the name of a random day of the week.
 +/
-string macro_day(ArgumentRange arguments)
+string builtin_day(ArgumentRange arguments)
 {
     if(!arguments.empty)
-        return macro_error("no arguments expected");
+        return builtin_error("no arguments expected");
     
     return Clock.currTime.roll!"days"(uniform!"[]"(0, 6)).dayOfWeek.name;
 }
 
-version(PHRASED_NO_DEFAULT_MACROS) {}
+version(PHRASED_NO_DEFAULT_BUILTINS) {}
 else
 {
     static this()
     {
-        register_macro("optional", &macro_optional);
-        register_macro("article", &macro_article);
-        register_macro("upper", &macro_upper);
-        register_macro("lower", &macro_lower);
-        register_macro("today", &macro_today);
-        register_macro("tomorrow", &macro_tomorrow);
-        register_macro("day", &macro_day);
+        register_builtin("optional", &builtin_optional);
+        register_builtin("article", &builtin_article);
+        register_builtin("upper", &builtin_upper);
+        register_builtin("lower", &builtin_lower);
+        register_builtin("today", &builtin_today);
+        register_builtin("tomorrow", &builtin_tomorrow);
+        register_builtin("day", &builtin_day);
     }
 }

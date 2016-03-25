@@ -130,9 +130,9 @@ class VariableNode: Node
     ///See $(SYMBOL_LINK Node.resolve).
     override string resolve()
     {
-        import phrased.macro_: resolve_macro;
+        import phrased.variable: resolve_variable;
         
-        return resolve_macro(name.resolve, arguments);
+        return resolve_variable(name.resolve, arguments);
     }
 }
 
