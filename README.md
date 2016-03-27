@@ -20,10 +20,10 @@ A variable is a special word which is replaced with other text upon template eva
 They are of the form `$variableName` or  `$(variableName arg1 arg2 ...)`.
 
 Variables can be evaluated as the result of calls to user-defined functions, called builtin variables.
-If no such function is defined, a given dictionary will attempt to look up the variable name as a category of word.
+If no such builtin is defined, a given dictionary will attempt to look up the variable name as a category of word.
 It is up to the dictionary to take appropriate action if no such category exists.
 
-Variables implemented as functions can (theoretically) perform any kind of processing on the arguments,
+Builtin variables can (theoretically) perform any kind of processing on the arguments,
 running them through another lex-parse-evaluate sequence, modifying the dictionary (if possible), or perhaps other operations still.
 
 ###Choices
