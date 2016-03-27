@@ -26,10 +26,6 @@ class ParserException: PhrasedException
 +/
 interface Node
 {
-    /++
-        Resolve this node, and any subnodes, into a string.
-    +/
-    string resolve();
 }
 
 /++
@@ -74,17 +70,6 @@ class SequenceNode: Node
     {
         return children.data.length == 0;
     }
-    
-    ///See $(SYMBOL_LINK Node.resolve).
-    override string resolve()
-    {
-        auto result = appender!string;
-        
-        foreach(child; children.data)
-            result.put(child.resolve);
-        
-        return result.data;
-    }
 }
 
 /++
@@ -97,12 +82,6 @@ class WordNode: Node
     this(string contents)
     {
         this.contents = contents;
-    }
-    
-    ///See $(SYMBOL_LINK Node.resolve).
-    override string resolve()
-    {
-        return contents;
     }
 }
 
@@ -126,14 +105,6 @@ class VariableNode: Node
         this.name = name;
         this.arguments = arguments;
     }
-    
-    ///See $(SYMBOL_LINK Node.resolve).
-    override string resolve()
-    {
-        import phrased.variable: resolve_variable;
-        
-        return resolve_variable(name.resolve, arguments);
-    }
 }
 
 /++
@@ -152,17 +123,6 @@ class ChoiceNode: SequenceNode
     this(Node[] choices)
     {
         super(choices);
-    }
-    
-    ///See $(SYMBOL_LINK Node.resolve).
-    override string resolve()
-    {
-        import std.random: uniform;
-        
-        if(empty)
-            return "";
-        else
-            return children.data[uniform(0, $)].resolve;
     }
 }
 
