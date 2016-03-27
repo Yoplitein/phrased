@@ -69,24 +69,24 @@ extern(C) void complete(const char *buffer, linenoiseCompletions *completions)
         return;
     
     string lastWord = line.split(" ")[$ - 1];
-    string macroPrefix;
+    string variablePrefix;
     string partialName;
     
     foreach(prefix; ["$(", "$"])
         if(lastWord.startsWith(prefix))
         {
-            macroPrefix = prefix;
+            variablePrefix = prefix;
             partialName = lastWord[prefix.length .. $];
             
             break;
         }
     
-    if(macroPrefix != null)
+    if(variablePrefix != null)
     {
-        string[] choices = registered_macros;
+        string[] choices = registered_builtins;
         choices ~= (cast(FileDictionary)defaultDictionary).words.keys;
         
-        foreach(name; choices.sort.uniq)
+        foreach(name; choices.sort!().uniq)
             if(name.startsWith(partialName))
                 linenoiseAddCompletion(completions, (line ~ name[partialName.length .. $]).toStringz);
     }
@@ -101,12 +101,12 @@ void main()
     
     linenoiseHistoryLoad("history.txt");
     linenoiseSetCompletionCallback(&complete);
-    register_macro(
+    register_builtin(
         "addWord",
         (ArgumentRange arguments)
         {
             if(arguments.length < 3)
-                return macro_error("need at least two arguments: word category and word");
+                return builtin_error("need at least two arguments: word category and word");
             
             string category = arguments.front.resolve;
             

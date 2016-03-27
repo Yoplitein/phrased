@@ -13,7 +13,7 @@ void main()
     dictionary.add("adjective", "shiny");
     dictionary.add("adjective", "obtuse");
     dictionary.add("adjective", "purple");
-    register_macro(
+    register_builtin(
         "uniform",
         (ArgumentRange arguments)
         {
@@ -22,7 +22,7 @@ void main()
             import std.string: format;
             
             if(arguments.length != 3) //the space after the macro name is dropped, but any subsequent spaces are included
-                return macro_error("expected two arguments, minimum value and maximum value");
+                return builtin_error("expected two arguments, minimum value and maximum value");
             
             int min;
             int max;
@@ -40,16 +40,16 @@ void main()
             try
                 min = minStr.to!int;
             catch(ConvException)
-                return macro_error(`"%s" is not a number`.format(minStr));
+                return builtin_error(`"%s" is not a number`.format(minStr));
             
             
             try
                 max = maxStr.to!int;
             catch(ConvException)
-                return macro_error(`"%s" is not a number`.format(maxStr));
+                return builtin_error(`"%s" is not a number`.format(maxStr));
             
             if(min > max || min == max)
-                return macro_error("min must be less than max");
+                return builtin_error("min must be less than max");
             
             return uniform(min, max).to!string;
         }
