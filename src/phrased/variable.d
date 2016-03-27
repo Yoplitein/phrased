@@ -13,6 +13,7 @@ private
     
     import phrased: PhrasedException, PhrasedRange;
     import phrased.expression: Node, SequenceNode;
+    import phrased.eval;
     
     BuiltinFunction[string] builtins;
     string currentBuiltin = "NONE";
@@ -112,7 +113,7 @@ string resolve(ArgumentRange arguments)
 {
     import std.array: array;
     
-    return new SequenceNode(arguments.array).resolve;
+    return new SequenceNode(arguments.array).eval;
 }
 
 unittest
