@@ -8,6 +8,9 @@ private
 {
     import std.string: format;
     import std.random: uniform;
+    import std.typecons: Flag;
+    import std.meta: AliasSeq;
+    import std.functional: toDelegate;
     
     import phrased: PhrasedException, PhrasedRange;
     import phrased.expression: Node, SequenceNode;
@@ -26,6 +29,11 @@ alias BuiltinFunction = string delegate(Variables vars, ArgumentRange arguments)
 alias ArgumentRange = PhrasedRange!Node;
 
 /++
+    A flag to control registration of the default builtins.
++/
+alias DefaultBuiltins = Flag!"defaultBuiltins";
+
+/++
     A set of builtins and a dictionary used during template evaluation.
 +/
 struct Variables
@@ -34,9 +42,13 @@ struct Variables
     private BuiltinFunction[string] _builtins;
     private string currentBuiltin = "NONE";
     
-    this(Dictionary dictionary)
+    this(Dictionary dictionary, DefaultBuiltins registerDefaultBuiltins = DefaultBuiltins.yes)
     {
         _dictionary = dictionary;
+        
+        if(registerDefaultBuiltins)
+            foreach(builtin; defaultBuiltins)
+                register(builtin.name, builtin.func);
     }
     
     @property Dictionary dictionary()
@@ -62,8 +74,6 @@ struct Variables
     +/
     void register(FunctionType)(string name, FunctionType builtinFunc, bool overwrite = false)
     {
-        import std.functional: toDelegate;
-        
         if(name in _builtins && !overwrite)
             throw new PhrasedException("A builtin by the name %s already exists".format(name));
         
@@ -299,19 +309,28 @@ string builtin_day(Variables vars, ArgumentRange arguments)
     return Clock.currTime.roll!"days"(uniform!"[]"(0, 6)).dayOfWeek.name;
 }
 
-Variables default_builtins()
+private struct DefaultBuiltin
 {
-    Variables result;
+    string name;
+    BuiltinFunction func;
+}
+
+private immutable DefaultBuiltin[] defaultBuiltins;
+
+static this()
+{
+    import std.exception: assumeUnique;
     
-    result.register("optional", &builtin_optional);
-    result.register("article", &builtin_article);
-    result.register("upper", &builtin_upper);
-    result.register("lower", &builtin_lower);
-    result.register("today", &builtin_today);
-    result.register("tomorrow", &builtin_tomorrow);
-    result.register("day", &builtin_day);
-    
-    return result;
+    auto defaultBuiltins = [
+        DefaultBuiltin("optional", toDelegate(&builtin_optional)),
+        DefaultBuiltin("article", toDelegate(&builtin_article)),
+        DefaultBuiltin("upper", toDelegate(&builtin_upper)),
+        DefaultBuiltin("lower", toDelegate(&builtin_lower)),
+        DefaultBuiltin("today", toDelegate(&builtin_today)),
+        DefaultBuiltin("tomorrow", toDelegate(&builtin_tomorrow)),
+        DefaultBuiltin("day", toDelegate(&builtin_day)),
+    ];
+    .defaultBuiltins = defaultBuiltins.assumeUnique;
 }
 
 unittest
