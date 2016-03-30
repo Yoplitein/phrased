@@ -309,3 +309,24 @@ Variables default_builtins()
     
     return result;
 }
+
+unittest
+{
+    import phrased.expression;
+    
+    auto dictionary = new RuntimeDictionary;
+    auto vars = Variables(dictionary);
+    
+    dictionary.add("test", "abc");
+    vars.register(
+        "testtwo",
+        (Variables vars, ArgumentRange args)
+        {
+            return "def";
+        }
+    );
+    
+    string result = "$test $testtwo".lex.parse.eval(vars);
+    
+    assert(result == "abc def");
+}
