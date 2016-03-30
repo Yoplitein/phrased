@@ -1,8 +1,6 @@
 /++
     Interface for managing builtin variables.
     Also includes some default, general purpose builtins.
-    
-    Registration of the default builtins can be disabled by passing version PHRASED_NO_DEFAULT_BUILTINS.
 +/
 module phrased.variable;
 
@@ -141,7 +139,6 @@ unittest
 
 //default builtins
 
-version(none):
 /++
     A builtin implementing an optional expression. Nicer syntax for $(TT {expression|}).
     
@@ -156,10 +153,10 @@ version(none):
         I have far too many cats.
         ---
 +/
-string builtin_optional(ArgumentRange arguments)
+string builtin_optional(Variables vars, ArgumentRange arguments)
 {
     if(uniform!"[]"(0, 1))
-        return arguments.resolve;
+        return arguments.resolve(vars);
     else
         return "";
 }
@@ -176,12 +173,12 @@ string builtin_optional(ArgumentRange arguments)
         a bear, an aardvark
         ---
 +/
-string builtin_article(ArgumentRange arguments)
+string builtin_article(Variables vars, ArgumentRange arguments)
 {
     if(arguments.length == 0)
-        return builtin_error("need at least one argument");
+        return vars.error("need at least one argument");
     
-    auto joined = arguments.resolve;
+    auto joined = arguments.resolve(vars);
     
     switch(joined[0])
     {
@@ -213,11 +210,11 @@ string builtin_article(ArgumentRange arguments)
         HELLO, WORLD!
         ---
 +/
-string builtin_upper(ArgumentRange arguments)
+string builtin_upper(Variables vars, ArgumentRange arguments)
 {
     import std.uni: toUpper;
     
-    return arguments.resolve.toUpper;
+    return arguments.resolve(vars).toUpper;
 }
 
 /++
@@ -232,11 +229,11 @@ string builtin_upper(ArgumentRange arguments)
         why am i shouting
         ---
 +/
-string builtin_lower(ArgumentRange arguments)
+string builtin_lower(Variables vars, ArgumentRange arguments)
 {
     import std.uni: toLower;
     
-    return arguments.resolve.toLower;
+    return arguments.resolve(vars).toLower;
 }
 
 private
@@ -268,10 +265,10 @@ private
 /++
     A builtin that resolves to the name of the current day.
 +/
-string builtin_today(ArgumentRange arguments)
+string builtin_today(Variables vars, ArgumentRange arguments)
 {
     if(!arguments.empty)
-        return builtin_error("no arguments expected");
+        return vars.error("no arguments expected");
     
     return Clock.currTime.dayOfWeek.name;
 }
@@ -279,10 +276,10 @@ string builtin_today(ArgumentRange arguments)
 /++
     A builtin that resolves to the name of the day tomorrow.
 +/
-string builtin_tomorrow(ArgumentRange arguments)
+string builtin_tomorrow(Variables vars, ArgumentRange arguments)
 {
     if(!arguments.empty)
-        return builtin_error("no arguments expected");
+        return vars.error("no arguments expected");
     
     return Clock.currTime.roll!"days"(1).dayOfWeek.name;
 }
@@ -290,25 +287,25 @@ string builtin_tomorrow(ArgumentRange arguments)
 /++
     A builtin that resolves to the name of a random day of the week.
 +/
-string builtin_day(ArgumentRange arguments)
+string builtin_day(Variables vars, ArgumentRange arguments)
 {
     if(!arguments.empty)
-        return builtin_error("no arguments expected");
+        return vars.error("no arguments expected");
     
     return Clock.currTime.roll!"days"(uniform!"[]"(0, 6)).dayOfWeek.name;
 }
 
-version(PHRASED_NO_DEFAULT_BUILTINS) {}
-else
+Variables default_builtins()
 {
-    static this()
-    {
-        register_builtin("optional", &builtin_optional);
-        register_builtin("article", &builtin_article);
-        register_builtin("upper", &builtin_upper);
-        register_builtin("lower", &builtin_lower);
-        register_builtin("today", &builtin_today);
-        register_builtin("tomorrow", &builtin_tomorrow);
-        register_builtin("day", &builtin_day);
-    }
+    Variables result;
+    
+    result.register("optional", &builtin_optional);
+    result.register("article", &builtin_article);
+    result.register("upper", &builtin_upper);
+    result.register("lower", &builtin_lower);
+    result.register("today", &builtin_today);
+    result.register("tomorrow", &builtin_tomorrow);
+    result.register("day", &builtin_day);
+    
+    return result;
 }
