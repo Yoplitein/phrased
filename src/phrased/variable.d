@@ -80,15 +80,13 @@ struct Variables
     
     /++
         Resolve a variable into a string by either running a registered builtin function,
-        or looking it up as a word in the $(LINK2 phrased.dictionary.html#defaultDictionary, default dictionary).
+        or looking it up as a word in the dictionary.
         
         Throws:
-            PhrasedException if the default dictionary is null
+            PhrasedException if the dictionary is null
     +/
     string resolve(string name, SequenceNode arguments)
     {
-        import phrased.dictionary: defaultDictionary;
-        
         if(name in _builtins)
         {
             string lastBuiltin = currentBuiltin;
@@ -101,10 +99,10 @@ struct Variables
         
         if(arguments.empty)
         {
-            if(defaultDictionary is null)
-                throw new PhrasedException(`Attempted to resolve variable "%s" as a word, but the default dictionary is null`.format(name));
+            if(_dictionary is null)
+                throw new PhrasedException(`Attempted to resolve variable "%s" as a word, but the dictionary is null`.format(name));
             
-            return defaultDictionary.lookup(name);
+            return _dictionary.lookup(name);
         }
         else
             return `<error: unknown builtin "%s">`.format(name);
