@@ -20,7 +20,7 @@ private
 /++
     The signature of a builtin.
 +/
-alias BuiltinFunction = string delegate(ArgumentRange arguments);
+alias BuiltinFunction = string delegate(Variables vars, ArgumentRange arguments);
 
 /++
     An input range passed to builtins containing their arguments.
@@ -96,7 +96,7 @@ struct Variables
             scope(exit) currentBuiltin = lastBuiltin;
             auto args = ArgumentRange(arguments.children.data);
             
-            return _builtins[name](args);
+            return _builtins[name](this, args);
         }
         
         if(arguments.empty)
