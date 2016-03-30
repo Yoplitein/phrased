@@ -5,8 +5,7 @@ import phrased;
 void main()
 {
 	auto dictionary = new RuntimeDictionary; //allows for words to be added at runtime
-    Variables vars = default_builtins; //gets a Variables struct with the default builtins preregistered
-    vars.dictionary = dictionary; //sets the dictionary used during evaluation
+    auto vars = Variables(dictionary); //a struct passed around during evaluation to look up variables
     
     dictionary.add("object", "world");
     dictionary.add("object", "keyboard");

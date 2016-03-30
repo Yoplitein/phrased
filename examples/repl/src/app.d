@@ -108,8 +108,7 @@ void main()
     import core.stdc.stdlib: free;
     
     dictionary = new FileDictionary("words.txt");
-	vars = default_builtins;
-    vars.dictionary = dictionary;
+	vars = Variables(dictionary);
     
     linenoiseHistoryLoad("history.txt");
     linenoiseSetCompletionCallback(&complete);
