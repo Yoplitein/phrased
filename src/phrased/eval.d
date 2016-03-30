@@ -65,6 +65,5 @@ string eval(SequenceNode sequence, Variables vars)
 +/
 string eval(VariableNode variable, Variables vars)
 {
-    //TODO: talk to builtins/dictionaries
-    return "<variable `%s` with args `%s`>".format(variable.name.eval(vars), variable.arguments.eval(vars));
+    return vars.resolve(variable.name.contents, variable.arguments);
 }
