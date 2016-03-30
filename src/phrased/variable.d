@@ -89,11 +89,10 @@ struct Variables
     /++
         Resolve a variable into a string by either running a registered builtin function,
         or looking it up as a word in the dictionary.
-        
-        Throws:
-            PhrasedException if the dictionary is null
     +/
     string resolve(string name, SequenceNode arguments)
+    in { assert(_dictionary !is null); }
+    body
     {
         if(name in _builtins)
         {
@@ -106,12 +105,7 @@ struct Variables
         }
         
         if(arguments.empty)
-        {
-            if(_dictionary is null)
-                throw new PhrasedException(`Attempted to resolve variable "%s" as a word, but the dictionary is null`.format(name));
-            
             return _dictionary.lookup(name);
-        }
         else
             return `<error: unknown builtin "%s">`.format(name);
     }
