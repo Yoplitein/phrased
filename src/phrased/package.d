@@ -4,6 +4,7 @@
 module phrased;
 
 public import phrased.dictionary;
+public import phrased.eval;
 public import phrased.expression;
 public import phrased.variable;
 
@@ -133,4 +134,12 @@ unittest
     range.popFront;
     assert(range.empty);
     assert(range.slice(mark) == "bcdef");
+}
+
+/++
+    Lexes, parses, and evaluates expression and returns the result.
++/
+string evaluate(string expression, Variables vars)
+{
+    return expression.lex.parse.eval(vars);
 }
