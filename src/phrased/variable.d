@@ -39,6 +39,16 @@ struct Variables
         _dictionary = dictionary;
     }
     
+    @property Dictionary dictionary()
+    {
+        return _dictionary;
+    }
+    
+    @property Dictionary dictionary(Dictionary newDictionary)
+    {
+        return _dictionary = newDictionary;
+    }
+    
     /++
         Register a builtin.
         
