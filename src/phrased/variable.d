@@ -33,7 +33,7 @@ alias ArgumentRange = PhrasedRange!Node;
 struct Variables
 {
     private Dictionary _dictionary;
-    private BuiltinFunction[string] builtins;
+    private BuiltinFunction[string] _builtins;
     private string currentBuiltin = "NONE";
     
     this(Dictionary dictionary)
@@ -52,30 +52,30 @@ struct Variables
         Throws:
             $(LINK2 phrased.package.html#PhrasedException, PhrasedException) if another builtin exists by this name, and overwrite is false
     +/
-    void register_builtin(FunctionType)(string name, FunctionType builtinFunc, bool overwrite = false)
+    void register(FunctionType)(string name, FunctionType builtinFunc, bool overwrite = false)
     {
         import std.functional: toDelegate;
         
-        if(name in builtins && !overwrite)
+        if(name in _builtins && !overwrite)
             throw new PhrasedException("A builtin by the name %s already exists".format(name));
         
-        builtins[name] = builtinFunc.toDelegate;
+        _builtins[name] = builtinFunc.toDelegate;
     }
     
     /++
         Deregister a builtin, if it exists.
     +/
-    void deregister_builtin(string name)
+    void deregister(string name)
     {
-        builtins.remove(name);
+        _builtins.remove(name);
     }
     
     /++
         Returns a list of the names of registered builtins.
     +/
-    string[] registered_builtins()
+    @property string[] builtins()
     {
-        return builtins.keys;
+        return _builtins.keys;
     }
     
     /++
@@ -85,18 +85,18 @@ struct Variables
         Throws:
             PhrasedException if the default dictionary is null
     +/
-    string resolve_variable(string name, SequenceNode arguments)
+    string resolve(string name, SequenceNode arguments)
     {
         import phrased.dictionary: defaultDictionary;
         
-        if(name in builtins)
+        if(name in _builtins)
         {
             string lastBuiltin = currentBuiltin;
             currentBuiltin = name;
             scope(exit) currentBuiltin = lastBuiltin;
             auto args = ArgumentRange(arguments.children.data);
             
-            return builtins[name](args);
+            return _builtins[name](args);
         }
         
         if(arguments.empty)
@@ -113,7 +113,7 @@ struct Variables
     /++
         Helper function for builtins that resolve to an error.
     +/
-    string builtin_error(string msg)
+    string error(string msg)
     {
         return `<error invoking builtin "%s": %s>`.format(currentBuiltin, msg);
     }
