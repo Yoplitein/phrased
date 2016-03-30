@@ -14,9 +14,7 @@ private
     import phrased: PhrasedException, PhrasedRange;
     import phrased.expression: Node, SequenceNode;
     import phrased.eval;
-    
-    BuiltinFunction[string] builtins;
-    string currentBuiltin = "NONE";
+    import phrased.dictionary;
 }
 
 /++
@@ -30,80 +28,95 @@ alias BuiltinFunction = string delegate(ArgumentRange arguments);
 alias ArgumentRange = PhrasedRange!Node;
 
 /++
-    Register a builtin.
-    
-    Params:
-        name = name of the builtin, as used in expressions
-        builtinFunc = function to call when this builtin is invoked in an expression
-        overwrite = whether to overwrite preexisting builtins
-    
-    Throws:
-        $(LINK2 phrased.package.html#PhrasedException, PhrasedException) if another builtin exists by this name, and overwrite is false
+    A set of builtins and a dictionary used during template evaluation.
 +/
-void register_builtin(FunctionType)(string name, FunctionType builtinFunc, bool overwrite = false)
+struct Variables
 {
-    import std.functional: toDelegate;
+    private Dictionary _dictionary;
+    private BuiltinFunction[string] builtins;
+    private string currentBuiltin = "NONE";
     
-    if(name in builtins && !overwrite)
-        throw new PhrasedException("A builtin by the name %s already exists".format(name));
-    
-    builtins[name] = builtinFunc.toDelegate;
-}
-
-/++
-    Deregister a builtin, if it exists.
-+/
-void deregister_builtin(string name)
-{
-    builtins.remove(name);
-}
-
-/++
-    Returns a list of the names of registered builtins.
-+/
-string[] registered_builtins()
-{
-    return builtins.keys;
-}
-
-/++
-    Resolve a variable into a string by either running a registered builtin function,
-    or looking it up as a word in the $(LINK2 phrased.dictionary.html#defaultDictionary, default dictionary).
-    
-    Throws:
-        PhrasedException if the default dictionary is null
-+/
-string resolve_variable(string name, SequenceNode arguments)
-{
-    import phrased.dictionary: defaultDictionary;
-    
-    if(name in builtins)
+    this(Dictionary dictionary)
     {
-        string lastBuiltin = currentBuiltin;
-        currentBuiltin = name;
-        scope(exit) currentBuiltin = lastBuiltin;
-        auto args = ArgumentRange(arguments.children.data);
-        
-        return builtins[name](args);
+        _dictionary = dictionary;
     }
     
-    if(arguments.empty)
-    {
-        if(defaultDictionary is null)
-            throw new PhrasedException(`Attempted to resolve variable "%s" as a word, but the default dictionary is null`.format(name));
+    /++
+        Register a builtin.
         
-        return defaultDictionary.lookup(name);
+        Params:
+            name = name of the builtin, as used in expressions
+            builtinFunc = function to call when this builtin is invoked in an expression
+            overwrite = whether to overwrite preexisting builtins
+        
+        Throws:
+            $(LINK2 phrased.package.html#PhrasedException, PhrasedException) if another builtin exists by this name, and overwrite is false
+    +/
+    void register_builtin(FunctionType)(string name, FunctionType builtinFunc, bool overwrite = false)
+    {
+        import std.functional: toDelegate;
+        
+        if(name in builtins && !overwrite)
+            throw new PhrasedException("A builtin by the name %s already exists".format(name));
+        
+        builtins[name] = builtinFunc.toDelegate;
     }
-    else
-        return `<error: unknown builtin "%s">`.format(name);
-}
-
-/++
-    Helper function for builtins that resolve to an error.
-+/
-string builtin_error(string msg)
-{
-    return `<error invoking builtin "%s": %s>`.format(currentBuiltin, msg);
+    
+    /++
+        Deregister a builtin, if it exists.
+    +/
+    void deregister_builtin(string name)
+    {
+        builtins.remove(name);
+    }
+    
+    /++
+        Returns a list of the names of registered builtins.
+    +/
+    string[] registered_builtins()
+    {
+        return builtins.keys;
+    }
+    
+    /++
+        Resolve a variable into a string by either running a registered builtin function,
+        or looking it up as a word in the $(LINK2 phrased.dictionary.html#defaultDictionary, default dictionary).
+        
+        Throws:
+            PhrasedException if the default dictionary is null
+    +/
+    string resolve_variable(string name, SequenceNode arguments)
+    {
+        import phrased.dictionary: defaultDictionary;
+        
+        if(name in builtins)
+        {
+            string lastBuiltin = currentBuiltin;
+            currentBuiltin = name;
+            scope(exit) currentBuiltin = lastBuiltin;
+            auto args = ArgumentRange(arguments.children.data);
+            
+            return builtins[name](args);
+        }
+        
+        if(arguments.empty)
+        {
+            if(defaultDictionary is null)
+                throw new PhrasedException(`Attempted to resolve variable "%s" as a word, but the default dictionary is null`.format(name));
+            
+            return defaultDictionary.lookup(name);
+        }
+        else
+            return `<error: unknown builtin "%s">`.format(name);
+    }
+    
+    /++
+        Helper function for builtins that resolve to an error.
+    +/
+    string builtin_error(string msg)
+    {
+        return `<error invoking builtin "%s": %s>`.format(currentBuiltin, msg);
+    }
 }
 
 /++
@@ -129,6 +142,7 @@ unittest
 
 //default builtins
 
+version(none):
 /++
     A builtin implementing an optional expression. Nicer syntax for $(TT {expression|}).
     
