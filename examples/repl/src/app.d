@@ -7,6 +7,17 @@ import colorize;
 import phrased;
 
 /++
+    The variables used during evaluation.
++/
+Variables vars;
+
+/++
+    The dictionary used during evaluation.
+    Also accessible via vars struct.
++/
+FileDictionary dictionary;
+
+/++
     A dictionary that is populated from a file with a simple structure:
     ---
     wordCategory value of this specific word
@@ -83,8 +94,8 @@ extern(C) void complete(const char *buffer, linenoiseCompletions *completions)
     
     if(variablePrefix != null)
     {
-        string[] choices = registered_builtins;
-        choices ~= (cast(FileDictionary)defaultDictionary).words.keys;
+        string[] choices = vars.builtins;
+        choices ~= dictionary.words.keys;
         
         foreach(name; choices.sort!().uniq)
             if(name.startsWith(partialName))
@@ -96,24 +107,25 @@ void main()
 {
     import core.stdc.stdlib: free;
     
-    auto dictionary = new FileDictionary("words.txt");
-	defaultDictionary = dictionary;
+    dictionary = new FileDictionary("words.txt");
+	vars = default_builtins;
+    vars.dictionary = dictionary;
     
     linenoiseHistoryLoad("history.txt");
     linenoiseSetCompletionCallback(&complete);
-    register_builtin(
+    vars.register(
         "addWord",
-        (ArgumentRange arguments)
+        (Variables vars, ArgumentRange arguments)
         {
             if(arguments.length < 3)
-                return builtin_error("need at least two arguments: word category and word");
+                return vars.error("need at least two arguments: word category and word");
             
-            string category = arguments.front.resolve;
+            string category = arguments.front.eval(vars);
             
             arguments.popFront;
             arguments.popFront;
             
-            string word = arguments.resolve;
+            string word = arguments.eval_arguments(vars);
             
             dictionary.words[category] ~= word;
             
@@ -129,7 +141,7 @@ void main()
             break;
         
         linenoiseHistoryAdd(line);
-        cwritefln(`"%s"`, line.fromStringz.idup.evaluate.color(fg.green));
+        cwritefln(`"%s"`, line.fromStringz.idup.evaluate(vars).color(fg.green));
         free(line);
     }
     
