@@ -9,15 +9,16 @@ import std.random;
 import std.string;
 
 import phrased.expression;
+import phrased.variable;
 
 /++
     Eval a Node. Calls a specialized function.
 +/
-string eval(Node node)
+string eval(Node node, Variables vars)
 {
     foreach(Type; AliasSeq!(WordNode, ChoiceNode, SequenceNode, VariableNode))
         if(Type casted = cast(Type)node)
-            return eval(casted);
+            return eval(casted, vars);
     
     assert(false);
 }
@@ -25,7 +26,7 @@ string eval(Node node)
 /++
     Eval a WordNode.
 +/
-string eval(WordNode word)
+string eval(WordNode word, Variables vars)
 {
     return word.contents;
 }
@@ -33,7 +34,7 @@ string eval(WordNode word)
 /++
     Eval a ChoiceNode.
 +/
-string eval(ChoiceNode choice)
+string eval(ChoiceNode choice, Variables vars)
 {
     if(choice.empty)
         return null;
@@ -43,18 +44,18 @@ string eval(ChoiceNode choice)
             .data
             .randomCover
             .front
-            .eval
+            .eval(vars)
         ;
 }
 /++
     Eval a SequenceNode.
 +/
-string eval(SequenceNode sequence)
+string eval(SequenceNode sequence, Variables vars)
 {
     Appender!string result;
     
     foreach(child; sequence.children.data)
-        result.put(child.eval);
+        result.put(child.eval(vars));
     
     return result.data;
 }
@@ -62,8 +63,8 @@ string eval(SequenceNode sequence)
 /++
     Eval a VariableNode.
 +/
-string eval(VariableNode variable)
+string eval(VariableNode variable, Variables vars)
 {
     //TODO: talk to builtins/dictionaries
-    return "<variable `%s` with args `%s`>".format(variable.name.eval, variable.arguments.eval);
+    return "<variable `%s` with args `%s`>".format(variable.name.eval(vars), variable.arguments.eval(vars));
 }

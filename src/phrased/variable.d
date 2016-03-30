@@ -122,22 +122,23 @@ struct Variables
 /++
     Resolves an $(SYMBOL_LINK ArgumentRange) into a string.
 +/
-string resolve(ArgumentRange arguments)
+string resolve(ArgumentRange arguments, Variables vars)
 {
     import std.array: array;
     
-    return new SequenceNode(arguments.array).eval;
+    return new SequenceNode(arguments.array).eval(vars);
 }
 
 unittest
 {
     import phrased.expression: WordNode;
     
+    Variables vars;
     auto args = ArgumentRange([new WordNode("abc"), new WordNode("def")]);
     
-    assert(args.resolve == "abcdef");
+    assert(args.resolve(vars) == "abcdef");
     args.popFront;
-    assert(args.resolve == "def");
+    assert(args.resolve(vars) == "def");
 }
 
 //default builtins
