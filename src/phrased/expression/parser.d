@@ -1,6 +1,6 @@
 /++
     Data structures and functions for parsing a stream of tokens into a tree of $(SYMBOL_LINK Node)s,
-    which can then be resolved into a string.
+    which can then be evaluated into a string.
 +/
 module phrased.expression.parser;
 
@@ -111,8 +111,8 @@ class VariableNode: Node
     A node representing a choice expression.
     
     Inherits from $(SYMBOL_LINK SequenceNode) as the functionality is mostly the same,
-    except a single child node is chosen while resolving, instead of concatenating them all.
-    The empty string is resolved if there are no children.
+    except a single child node is chosen while evaluating, instead of concatenating them all.
+    The empty string is evaluated if there are no children.
 +/
 class ChoiceNode: SequenceNode
 {
