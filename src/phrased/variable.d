@@ -87,10 +87,10 @@ struct Variables
     }
     
     /++
-        Resolve a variable into a string by either running a registered builtin function,
+        Evaluate a variable by either running a registered builtin function,
         or looking it up as a word in the dictionary.
     +/
-    string resolve(string name, SequenceNode arguments)
+    string lookup(string name, SequenceNode arguments)
     in { assert(_dictionary !is null); }
     body
     {
@@ -111,7 +111,7 @@ struct Variables
     }
     
     /++
-        Helper function for builtins that resolve to an error.
+        Helper function for builtins that evaluate to an error.
     +/
     string error(string msg)
     {

@@ -65,5 +65,5 @@ string eval(SequenceNode sequence, Variables vars)
 +/
 string eval(VariableNode variable, Variables vars)
 {
-    return vars.resolve(variable.name.contents, variable.arguments);
+    return vars.lookup(variable.name.contents, variable.arguments);
 }
