@@ -120,9 +120,9 @@ struct Variables
 }
 
 /++
-    Resolves an $(SYMBOL_LINK ArgumentRange) into a string.
+    Evaluates an $(SYMBOL_LINK ArgumentRange).
 +/
-string resolve(ArgumentRange arguments, Variables vars)
+string eval_arguments(ArgumentRange arguments, Variables vars)
 {
     import std.array: array;
     
@@ -136,9 +136,9 @@ unittest
     Variables vars;
     auto args = ArgumentRange([new WordNode("abc"), new WordNode("def")]);
     
-    assert(args.resolve(vars) == "abcdef");
+    assert(args.eval_arguments(vars) == "abcdef");
     args.popFront;
-    assert(args.resolve(vars) == "def");
+    assert(args.eval_arguments(vars) == "def");
 }
 
 //default builtins
@@ -160,7 +160,7 @@ unittest
 string builtin_optional(Variables vars, ArgumentRange arguments)
 {
     if(uniform!"[]"(0, 1))
-        return arguments.resolve(vars);
+        return arguments.eval_arguments(vars);
     else
         return "";
 }
@@ -182,7 +182,7 @@ string builtin_article(Variables vars, ArgumentRange arguments)
     if(arguments.length == 0)
         return vars.error("need at least one argument");
     
-    auto joined = arguments.resolve(vars);
+    auto joined = arguments.eval_arguments(vars);
     
     switch(joined[0])
     {
@@ -218,7 +218,7 @@ string builtin_upper(Variables vars, ArgumentRange arguments)
 {
     import std.uni: toUpper;
     
-    return arguments.resolve(vars).toUpper;
+    return arguments.eval_arguments(vars).toUpper;
 }
 
 /++
@@ -237,7 +237,7 @@ string builtin_lower(Variables vars, ArgumentRange arguments)
 {
     import std.uni: toLower;
     
-    return arguments.resolve(vars).toLower;
+    return arguments.eval_arguments(vars).toLower;
 }
 
 private
@@ -267,7 +267,7 @@ private
 }
 
 /++
-    A builtin that resolves to the name of the current day.
+    A builtin that evaluates to the name of the current day.
 +/
 string builtin_today(Variables vars, ArgumentRange arguments)
 {
@@ -278,7 +278,7 @@ string builtin_today(Variables vars, ArgumentRange arguments)
 }
 
 /++
-    A builtin that resolves to the name of the day tomorrow.
+    A builtin that evaluates to the name of the day tomorrow.
 +/
 string builtin_tomorrow(Variables vars, ArgumentRange arguments)
 {
@@ -289,7 +289,7 @@ string builtin_tomorrow(Variables vars, ArgumentRange arguments)
 }
 
 /++
-    A builtin that resolves to the name of a random day of the week.
+    A builtin that evaluates to the name of a random day of the week.
 +/
 string builtin_day(Variables vars, ArgumentRange arguments)
 {
